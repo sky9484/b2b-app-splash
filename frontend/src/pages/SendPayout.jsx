@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import api, { formatMYR, formatPHP, formatNum } from "../lib/api";
-import { Check, ChevronRight, ChevronLeft, ArrowRight, ChevronDown, Loader2, PartyPopper } from "lucide-react";
+import api, { API, formatMYR, formatPHP, formatNum, formatApiError } from "../lib/api";
+import { Check, ChevronRight, ChevronLeft, ArrowRight, ChevronDown, Loader2, PartyPopper, ExternalLink, Download, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import Confetti from "react-confetti";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
@@ -79,22 +79,48 @@ export default function SendPayout() {
     return () => clearInterval(t);
   }, [step, transfer?.id, transfer?.status]); // eslint-disable-line
 
+  const [fpxStage, setFpxStage] = useState(null); // null | "bank-pick" | "authorizing" | "done"
+  const [fpxBank, setFpxBank] = useState("Maybank2u");
+
   const confirm = async () => {
+    // Step A: show FPX bank picker (Curlec-style mock)
+    setFpxStage("bank-pick");
+  };
+
+  const completeFpxFlow = async () => {
+    setFpxStage("authorizing");
     setCreating(true);
     try {
-      // Save recipient first
-      const { data: rec } = await api.post("/recipients", {
-        name: recipient.name, country: "PH", bank: recipient.bank,
-        account_number: recipient.account_number, mobile: recipient.mobile,
-      });
+      // Save recipient first (or reuse if duplicate)
+      let recId;
+      try {
+        const { data: rec } = await api.post("/recipients", {
+          name: recipient.name, country: "PH", bank: recipient.bank,
+          account_number: recipient.account_number, mobile: recipient.mobile,
+        });
+        recId = rec.id;
+      } catch (e) {
+        if (e.response?.status === 409) {
+          // duplicate — find existing by bank + account
+          const { data: list } = await api.get("/recipients");
+          const match = list.find((r) => r.bank === recipient.bank && r.account_number.replace(/\s/g, "") === recipient.account_number.replace(/\s/g, ""));
+          if (!match) throw e;
+          recId = match.id;
+          toast.info(`Reusing existing recipient: ${match.name}`);
+        } else throw e;
+      }
+      // Simulate FPX authorization delay
+      await new Promise((r) => setTimeout(r, 1600));
       const { data } = await api.post("/transfers", {
-        recipient_id: rec.id, send_amount_myr: parseFloat(amount), reference, note,
+        recipient_id: recId, send_amount_myr: parseFloat(amount), reference, note,
       });
       setTransfer(data);
+      setFpxStage(null);
       setStep(4);
       toast.success("Payment submitted!");
     } catch (e) {
-      toast.error("Failed to submit payment");
+      toast.error(formatApiError(e.response?.data?.detail) || "Failed to submit payment");
+      setFpxStage(null);
     } finally {
       setCreating(false);
     }
@@ -144,6 +170,77 @@ export default function SendPayout() {
         {step === 2 && <StepAmount amount={amount} setAmount={setAmount} quote={quote} showFee={showFee} setShowFee={setShowFee} reference={reference} setReference={setReference} note={note} setNote={setNote} onBack={() => setStep(1)} onContinue={() => setStep(3)} />}
         {step === 3 && <StepReview recipient={recipient} amount={amount} quote={quote} countdown={countdown} confirming={creating} onBack={() => setStep(2)} onConfirm={confirm} />}
         {step === 4 && <StepTrack transfer={transfer} onReset={reset} />}
+      </div>
+
+      {fpxStage && (
+        <FPXModal
+          stage={fpxStage}
+          bank={fpxBank}
+          setBank={setFpxBank}
+          amount={parseFloat(amount || 0)}
+          onCancel={() => { setFpxStage(null); setCreating(false); }}
+          onAuthorize={completeFpxFlow}
+        />
+      )}
+    </div>
+  );
+}
+
+function FPXModal({ stage, bank, setBank, amount, onCancel, onAuthorize }) {
+  const banks = [
+    { id: "Maybank2u", label: "Maybank2u", color: "#FFCB05" },
+    { id: "CIMB Clicks", label: "CIMB Clicks", color: "#7B1818" },
+    { id: "Public Bank", label: "PBe (Public Bank)", color: "#D62128" },
+    { id: "RHB Now", label: "RHB Now", color: "#02559C" },
+    { id: "Hong Leong Connect", label: "Hong Leong Connect", color: "#F0762E" },
+    { id: "AmOnline", label: "AmOnline", color: "#E2231A" },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(10,30,63,0.6)", backdropFilter: "blur(4px)" }} data-testid="fpx-modal">
+      <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden animate-fade-up">
+        <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#F4F7FB", borderBottom: "1px solid var(--splash-border)" }}>
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={16} style={{ color: "var(--splash-green)" }} />
+            <span className="text-sm font-semibold tracking-tight">FPX · Secure online banking</span>
+          </div>
+          <button onClick={onCancel} className="text-xs font-medium" style={{ color: "var(--splash-muted)" }} data-testid="fpx-cancel">Cancel</button>
+        </div>
+
+        {stage === "bank-pick" && (
+          <div className="p-6">
+            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--splash-muted)" }}>Amount to debit</div>
+            <div className="text-2xl font-semibold tabular-nums mb-5">RM {amount.toLocaleString("en-MY", { minimumFractionDigits: 2 })}</div>
+            <div className="text-sm font-medium mb-3">Choose your bank</div>
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              {banks.map((b) => (
+                <button
+                  key={b.id} onClick={() => setBank(b.id)} data-testid={`fpx-bank-${b.id}`}
+                  className="text-left rounded-lg border p-3 transition hover:border-[#22A7F0]"
+                  style={{ borderColor: bank === b.id ? "var(--splash-cyan)" : "var(--splash-border)", backgroundColor: bank === b.id ? "rgba(34,167,240,0.06)" : "white" }}
+                >
+                  <div className="w-6 h-6 rounded mb-2" style={{ backgroundColor: b.color }} />
+                  <div className="text-xs font-medium leading-tight">{b.label}</div>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onAuthorize} data-testid="fpx-authorize"
+              className="w-full rounded-lg py-3 font-semibold text-white transition hover:opacity-95"
+              style={{ backgroundColor: "var(--splash-navy)" }}
+            >
+              Continue to {bank}
+            </button>
+            <p className="text-xs text-center mt-3" style={{ color: "var(--splash-muted)" }}>Powered by FPX · Cleared by PayNet Malaysia</p>
+          </div>
+        )}
+
+        {stage === "authorizing" && (
+          <div className="p-10 text-center">
+            <div className="mx-auto w-12 h-12 mb-4"><div className="spinner-ring" style={{ width: 48, height: 48, borderWidth: 4 }} /></div>
+            <div className="font-semibold">Authorizing with {bank}…</div>
+            <div className="text-xs mt-2" style={{ color: "var(--splash-muted)" }}>Securely debiting RM {amount.toLocaleString("en-MY", { minimumFractionDigits: 2 })} from your account.</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -372,8 +469,37 @@ function StepTrack({ transfer, onReset }) {
       </div>
 
       <div className="flex flex-wrap gap-2 pt-2">
-        <button className={btnSecondary} data-testid="view-receipt" onClick={() => toast.info("Receipt opened in Sui Explorer (demo)")}>
-          View receipt
+        <a
+          href={transfer.sui_explorer_url || "#"}
+          target="_blank" rel="noreferrer"
+          data-testid="view-sui-explorer"
+          className="rounded-lg px-5 py-2.5 font-medium border bg-white inline-flex items-center gap-2 transition hover:bg-slate-50"
+        >
+          <ExternalLink size={14} /> View on Sui Explorer
+        </a>
+        <button
+          className="rounded-lg px-5 py-2.5 font-medium border bg-white inline-flex items-center gap-2 transition hover:bg-slate-50"
+          data-testid="download-receipt"
+          onClick={async () => {
+            try {
+              const token = localStorage.getItem("splash_token");
+              const res = await fetch(`${API}/transfers/${transfer.id}/receipt`, {
+                credentials: "include",
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+              });
+              if (!res.ok) throw new Error("Failed");
+              const blob = await res.blob();
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url; a.download = `splash-receipt-${transfer.reference}.pdf`;
+              a.click(); URL.revokeObjectURL(url);
+              toast.success("Receipt downloaded");
+            } catch {
+              toast.error("Could not download receipt");
+            }
+          }}
+        >
+          <Download size={14} /> Download receipt
         </button>
         <button onClick={onReset} className={btnPrimary} style={{ backgroundColor: "var(--splash-navy)" }} data-testid="send-another">
           Send another payment

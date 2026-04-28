@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import api, { formatMYR, formatPHP, formatDateTime } from "../lib/api";
+import api, { API, formatMYR, formatPHP, formatDateTime } from "../lib/api";
 import { Search, Download, MoreHorizontal, RefreshCw, FileText } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -127,8 +127,25 @@ export default function Transfers() {
                           <button data-testid={`row-actions-${r.id}`} className="p-1.5 rounded hover:bg-slate-100"><MoreHorizontal size={16} /></button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => toast.info("Receipt opened (demo)")}>View receipt</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toast.success("PDF downloaded (demo)")}>Download PDF</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.open(r.sui_explorer_url, "_blank")}>View on Sui Explorer</DropdownMenuItem>
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              const token = localStorage.getItem("splash_token");
+                              const res = await fetch(`${API}/transfers/${r.id}/receipt`, {
+                                credentials: "include",
+                                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                              });
+                              if (!res.ok) throw new Error("Failed");
+                              const blob = await res.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url; a.download = `splash-receipt-${r.reference}.pdf`;
+                              a.click(); URL.revokeObjectURL(url);
+                              toast.success("Receipt downloaded");
+                            } catch {
+                              toast.error("Could not download receipt");
+                            }
+                          }}>Download PDF</DropdownMenuItem>
                           {r.status === "failed" ? (
                             <DropdownMenuItem onClick={() => toast.success("Retry queued")}><RefreshCw size={12} className="mr-2"/>Retry</DropdownMenuItem>
                           ) : (

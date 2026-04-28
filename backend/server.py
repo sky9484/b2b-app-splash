@@ -13,12 +13,17 @@ from typing import List, Optional
 
 import bcrypt
 import jwt
+import io
 import requests
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.pdfgen import canvas
+from reportlab.lib.colors import HexColor
 
 # ---------- Setup ----------
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -132,6 +137,49 @@ def fetch_fx_rate() -> float:
         logger.warning(f"FX fetch failed, using fallback: {e}")
         return _fx_cache["rate"] or 12.9822
 
+SUI_EXPLORER_BASE = "https://suiscan.xyz/mainnet/tx"
+
+def gen_sui_tx_hash() -> str:
+    return "0x" + uuid.uuid4().hex + uuid.uuid4().hex[:16]
+
+def notify_email(to: str, subject: str, body: str) -> dict:
+    """Send email via Resend if RESEND_API_KEY set, else console log."""
+    api_key = os.environ.get("RESEND_API_KEY")
+    sender = os.environ.get("RESEND_FROM", "Splash <onboarding@resend.dev>")
+    if not api_key:
+        logger.info(f"[EMAIL MOCK] to={to} subject={subject!r}\n{body[:200]}")
+        return {"sent": False, "mocked": True}
+    try:
+        r = requests.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={"from": sender, "to": [to], "subject": subject, "html": body},
+            timeout=5,
+        )
+        return {"sent": r.status_code in (200, 202), "mocked": False, "status": r.status_code}
+    except Exception as e:
+        logger.warning(f"Resend email failed: {e}")
+        return {"sent": False, "mocked": False, "error": str(e)}
+
+def notify_sms(to: str, body: str) -> dict:
+    """Send SMS via Twilio if creds set, else console log."""
+    sid = os.environ.get("TWILIO_ACCOUNT_SID")
+    token = os.environ.get("TWILIO_AUTH_TOKEN")
+    from_num = os.environ.get("TWILIO_FROM")
+    if not (sid and token and from_num and to):
+        logger.info(f"[SMS MOCK] to={to} body={body[:120]!r}")
+        return {"sent": False, "mocked": True}
+    try:
+        r = requests.post(
+            f"https://api.twilio.com/2010-04-01/Accounts/{sid}/Messages.json",
+            data={"From": from_num, "To": to, "Body": body},
+            auth=(sid, token), timeout=5,
+        )
+        return {"sent": r.status_code in (200, 201), "mocked": False, "status": r.status_code}
+    except Exception as e:
+        logger.warning(f"Twilio SMS failed: {e}")
+        return {"sent": False, "mocked": False, "error": str(e)}
+
 def calc_quote(amount_myr: float):
     rate = fetch_fx_rate()
     fx_spread = round(amount_myr * 0.012, 2)
@@ -226,8 +274,16 @@ async def list_recipients(user=Depends(get_current_user)):
             r["last_sent_at"] = None
     return rows
 
+def _norm_account(s: str) -> str:
+    return "".join((s or "").split())
+
 @api.post("/recipients")
 async def create_recipient(body: RecipientIn, user=Depends(get_current_user)):
+    norm = _norm_account(body.account_number)
+    cursor = db.recipients.find({"user_id": user["id"], "bank": body.bank}, {"_id": 0})
+    async for r in cursor:
+        if norm and _norm_account(r.get("account_number", "")) == norm:
+            raise HTTPException(status_code=409, detail=f"This account already exists for {r['name']}")
     rid = str(uuid.uuid4())
     doc = {
         "id": rid, "user_id": user["id"], "name": body.name, "country": body.country,
@@ -237,6 +293,23 @@ async def create_recipient(body: RecipientIn, user=Depends(get_current_user)):
     await db.recipients.insert_one(doc)
     doc.pop("_id", None)
     return doc
+
+@api.put("/recipients/{rid}")
+async def update_recipient(rid: str, body: RecipientIn, user=Depends(get_current_user)):
+    existing = await db.recipients.find_one({"id": rid, "user_id": user["id"]}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Recipient not found")
+    norm = _norm_account(body.account_number)
+    cursor = db.recipients.find({"user_id": user["id"], "bank": body.bank, "id": {"$ne": rid}}, {"_id": 0})
+    async for r in cursor:
+        if norm and _norm_account(r.get("account_number", "")) == norm:
+            raise HTTPException(status_code=409, detail=f"This account already exists for {r['name']}")
+    update = {
+        "name": body.name, "country": body.country, "bank": body.bank,
+        "account_number": body.account_number, "mobile": body.mobile or "",
+    }
+    await db.recipients.update_one({"id": rid}, {"$set": update})
+    return {**existing, **update}
 
 @api.delete("/recipients/{rid}")
 async def delete_recipient(rid: str, user=Depends(get_current_user)):
@@ -294,10 +367,12 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
     q = calc_quote(body.send_amount_myr)
     tid = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+    sui_hash = gen_sui_tx_hash()
     doc = {
         "id": tid, "user_id": user["id"], "recipient_id": rec["id"],
         "recipient_name": rec["name"], "recipient_bank": rec["bank"],
         "recipient_account": rec["account_number"],
+        "recipient_mobile": rec.get("mobile", ""),
         "send_amount_myr": q["send_amount_myr"], "receive_amount_php": q["receive_amount_php"],
         "rate": q["rate"], "total_fee_myr": q["total_fee"],
         "fx_spread": q["fx_spread"], "platform_fee": q["platform_fee"], "fixed_fee": q["fixed_fee"],
@@ -306,16 +381,24 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
         "status": "pending",
         "settlement_seconds": random.randint(180, 300),
         "created_at": now.isoformat(),
+        "sui_tx_hash": sui_hash,
+        "sui_explorer_url": f"{SUI_EXPLORER_BASE}/{sui_hash}",
         "stages": [
             {"key": "fpx", "label": "FPX payment received", "desc": "Your bank transfer completed successfully", "done": True, "ts": now.isoformat()},
             {"key": "luno", "label": "MYR converted to USDC on Luno", "desc": f"{q['send_amount_myr']:.2f} MYR → {round(q['send_amount_myr']/19.4, 2)} USDC", "done": True, "ts": (now + timedelta(seconds=20)).isoformat()},
-            {"key": "sui", "label": "USDC settled on Sui blockchain", "desc": f"Settlement hash: 0x{uuid.uuid4().hex[:8]}...{uuid.uuid4().hex[:4]}", "done": True, "ts": (now + timedelta(seconds=40)).isoformat()},
+            {"key": "sui", "label": "USDC settled on Sui blockchain", "desc": f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]}", "done": True, "ts": (now + timedelta(seconds=40)).isoformat()},
             {"key": "coins", "label": "USDC converted to PHP on Coins.ph", "desc": f"Processing → {q['receive_amount_php']:.2f} PHP", "done": False, "ts": None},
             {"key": "bank", "label": f"Sent to recipient's {rec['bank']} account", "desc": "Awaiting bank confirmation", "done": False, "ts": None},
         ],
     }
     await db.transfers.insert_one(doc)
     doc.pop("_id", None)
+    # Send "transfer initiated" email to user
+    notify_email(
+        user["email"],
+        f"Splash · Payout {doc['reference']} initiated",
+        f"<p>Your payout of <b>RM {q['send_amount_myr']:.2f}</b> to <b>{rec['name']}</b> ({rec['bank']}) is being processed. They'll receive ₱{q['receive_amount_php']:.2f}.</p><p>Reference: <code>{doc['reference']}</code></p>",
+    )
     return doc
 
 @api.post("/transfers/{tid}/advance")
@@ -337,7 +420,90 @@ async def advance_transfer(tid: str, user=Depends(get_current_user)):
     await db.transfers.update_one({"id": tid}, {"$set": {"stages": stages, "status": new_status}})
     t["stages"] = stages
     t["status"] = new_status
+    # Notify on completion
+    if new_status == "completed" and t.get("status_notified") != "completed":
+        await db.transfers.update_one({"id": tid}, {"$set": {"status_notified": "completed"}})
+        notify_email(
+            user["email"],
+            f"Splash · Payout {t['reference']} delivered",
+            f"<p>Your payout to <b>{t['recipient_name']}</b> has been delivered. ₱{t['receive_amount_php']:.2f} is now in their {t['recipient_bank']} account.</p><p>Reference: <code>{t['reference']}</code></p>",
+        )
+        if t.get("recipient_mobile"):
+            notify_sms(
+                t["recipient_mobile"],
+                f"Splash: ₱{t['receive_amount_php']:.2f} from {user.get('name','')} has been credited to your {t['recipient_bank'].split(' (')[0]} account. Ref {t['reference']}",
+            )
     return t
+
+@api.get("/transfers/{tid}/receipt")
+async def transfer_receipt(tid: str, user=Depends(get_current_user)):
+    t = await db.transfers.find_one({"id": tid, "user_id": user["id"]}, {"_id": 0})
+    if not t:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+    buf = io.BytesIO()
+    c = canvas.Canvas(buf, pagesize=A4)
+    W, H = A4
+    navy = HexColor("#0A1E3F"); cyan = HexColor("#22A7F0"); green = HexColor("#00D2A0")
+    muted = HexColor("#718096"); border = HexColor("#E2E8F0"); text = HexColor("#1A202C")
+
+    # Header band
+    c.setFillColor(navy); c.rect(0, H - 32*mm, W, 32*mm, fill=1, stroke=0)
+    c.setFillColor(cyan); c.roundRect(20*mm, H - 24*mm, 14*mm, 14*mm, 3*mm, fill=1, stroke=0)
+    c.setFillColor(HexColor("#FFFFFF"))
+    c.setFont("Helvetica-Bold", 18); c.drawString(40*mm, H - 18*mm, "Splash")
+    c.setFont("Helvetica", 9); c.drawString(40*mm, H - 23*mm, "Cross-border payout receipt")
+    c.setFont("Helvetica", 9); c.drawRightString(W - 20*mm, H - 18*mm, f"Ref: {t['reference']}")
+    c.drawRightString(W - 20*mm, H - 23*mm, datetime.fromisoformat(t['created_at']).strftime("%d %b %Y, %H:%M UTC"))
+
+    # Status pill
+    y = H - 45*mm
+    status = t['status']
+    pill_color = {"completed": green, "pending": HexColor("#FFB800"), "failed": HexColor("#E53E3E")}.get(status, muted)
+    c.setFillColor(pill_color); c.roundRect(20*mm, y, 28*mm, 7*mm, 3.5*mm, fill=1, stroke=0)
+    c.setFillColor(HexColor("#FFFFFF")); c.setFont("Helvetica-Bold", 9)
+    c.drawCentredString(34*mm, y + 2.4*mm, status.upper())
+
+    # Hero amounts
+    y -= 18*mm
+    c.setFillColor(muted); c.setFont("Helvetica", 9); c.drawString(20*mm, y, "YOU SENT")
+    c.setFillColor(text); c.setFont("Helvetica-Bold", 22)
+    c.drawString(20*mm, y - 8*mm, f"RM {t['send_amount_myr']:,.2f}")
+    c.setFillColor(muted); c.setFont("Helvetica", 9); c.drawString(W/2, y, "RECIPIENT RECEIVED")
+    c.setFillColor(green); c.setFont("Helvetica-Bold", 22)
+    c.drawString(W/2, y - 8*mm, f"PHP {t['receive_amount_php']:,.2f}")
+
+    # Details rows
+    y -= 24*mm
+    c.setStrokeColor(border); c.setLineWidth(0.5)
+    rows = [
+        ("Recipient", t['recipient_name']),
+        ("Bank", t['recipient_bank']),
+        ("Account number", t['recipient_account']),
+        ("Exchange rate", f"1 MYR = {t['rate']:.4f} PHP"),
+        ("FX spread (1.20%)", f"RM {t['fx_spread']:.2f}"),
+        ("Platform fee (0.20%)", f"RM {t['platform_fee']:.2f}"),
+        ("Fixed fee", f"RM {t['fixed_fee']:.2f}"),
+        ("Total fee", f"RM {t['total_fee_myr']:.2f}"),
+        ("Total debit", f"RM {t['send_amount_myr']:,.2f}"),
+        ("Sui transaction hash", t.get('sui_tx_hash', '')[:24] + "…"),
+        ("Note", t.get('note') or "—"),
+    ]
+    for label, val in rows:
+        c.line(20*mm, y - 1*mm, W - 20*mm, y - 1*mm)
+        c.setFillColor(muted); c.setFont("Helvetica", 9); c.drawString(20*mm, y - 6*mm, label)
+        c.setFillColor(text); c.setFont("Helvetica", 10); c.drawRightString(W - 20*mm, y - 6*mm, str(val))
+        y -= 9*mm
+
+    # Footer
+    c.setFillColor(muted); c.setFont("Helvetica", 8)
+    c.drawString(20*mm, 20*mm, "Splash Pte Ltd · Regulated by Bank Negara Malaysia · BSP-licensed PH partner")
+    c.drawString(20*mm, 16*mm, f"Verify on Sui Explorer: {t.get('sui_explorer_url', '')}")
+    c.showPage(); c.save()
+    buf.seek(0)
+    return StreamingResponse(
+        buf, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="splash-receipt-{t["reference"]}.pdf"'}
+    )
 
 @api.get("/transfers/{tid}")
 async def get_transfer(tid: str, user=Depends(get_current_user)):
