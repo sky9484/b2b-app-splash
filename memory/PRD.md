@@ -13,6 +13,20 @@ Build a B2B cross-border payment dashboard called "Splash" for Malaysian SMEs se
 - **Live FX**: open.er-api.com (free, cached 10 min). Falls back to 12.9822 MYR→PHP if API unreachable.
 - **Mocked**: Luno / Sui / Coins.ph / FPX integrations are simulated client-side via 5-stage advance polling.
 
+## Iteration 3 additions (2026-04-28) — "almost real"
+- ✅ **Real Curlec/Razorpay (Malaysia FPX) integration** with graceful mock fallback:
+  - `services/curlec_service.py` wraps the official `razorpay==2.0.1` SDK (Curlec is Razorpay-MY).
+  - `POST /api/transfers/{id}/init-payment` → returns a real Razorpay order when `RAZORPAY_KEY_ID/SECRET` present, otherwise `{mocked: true}`.
+  - `POST /api/transfers/{id}/verify-payment` verifies HMAC-SHA256 client-side handler signature.
+  - `POST /api/webhooks/curlec` verifies `X-Razorpay-Signature`, advances transfer state on `payment.captured` / `payment.failed`.
+  - Frontend dynamically loads `checkout.razorpay.com/v1/checkout.js` and opens the official Razorpay popup with `theme:#0A1E3F`. Falls back to in-app FPX modal when keys absent.
+- ✅ **Real Sui Move smart contract** + Python integration:
+  - `/app/sui_contract/` — real Move source: `splash::settlement` module with shared `Registry` object + `record_settlement` entry function emitting `SettlementRecorded` events. Recipient PII is sha256-hashed before going on-chain.
+  - `services/sui_service.py` uses `pysui==0.98.0` to call `record_settlement` from the backend after stage 3 ("USDC settled on Sui") fires.
+  - `scripts/deploy_sui.py` — one-shot deployer that auto-generates a keypair, requests faucet drops, builds + publishes the package, and writes `SUI_PACKAGE_ID` / `SUI_REGISTRY_ID` back to `.env`.
+  - When env vars absent, app uses the existing mock hash → demo never breaks.
+  - Network: Sui testnet (`SUI_RPC_URL=https://fullnode.testnet.sui.io:443`). Explorer links route to `suiscan.xyz/testnet/tx/...` when real, `mainnet/tx/...` for demo mocks.
+
 ## What's Implemented (Updated 2026-04-28 — Iteration 2)
 **MVP (initial):** All 6 routes (Login, Dashboard, Send 4-step wizard, Transfers, Recipients, Batch), auth, seeded data, live FX, mocked payment timeline.
 

@@ -137,7 +137,7 @@ def fetch_fx_rate() -> float:
         logger.warning(f"FX fetch failed, using fallback: {e}")
         return _fx_cache["rate"] or 12.9822
 
-SUI_EXPLORER_BASE = "https://suiscan.xyz/mainnet/tx"
+SUI_EXPLORER_BASE_MOCK = "https://suiscan.xyz/mainnet/tx"  # demo links — only valid when sui_real=true switches to testnet
 
 # Local services (Curlec real flow + Sui Move contract)
 from services import curlec_service, sui_service  # noqa: E402
@@ -371,7 +371,7 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
     tid = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     sui_hash = gen_sui_tx_hash()
-    sui_explorer = f"{SUI_EXPLORER_BASE}/{sui_hash}"  # default mock; replaced below if real
+    sui_explorer = f"{SUI_EXPLORER_BASE_MOCK}/{sui_hash}"  # default mock; replaced below if real
     if sui_service.is_configured():
         # Mark explorer base to testnet up front so UI link is correct even before record
         sui_explorer = sui_service.explorer_url(sui_hash)
