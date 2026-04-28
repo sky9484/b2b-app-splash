@@ -9,22 +9,18 @@ import { ArrowRight, Loader2 } from "lucide-react";
 // Requires REACT_APP_GOOGLE_CLIENT_ID in frontend/.env
 const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID || "";
 const ZK_LOGIN_REDIRECT = window.location.origin + "/login";
+const ZK_CONFIGURED = Boolean(GOOGLE_CLIENT_ID);
 
 function handleZkLogin() {
-  if (!GOOGLE_CLIENT_ID) {
-    toast.error("Google Client ID not configured. Add REACT_APP_GOOGLE_CLIENT_ID to frontend/.env");
-    return;
-  }
-  // Generate a nonce for zkLogin (in production use @mysten/zklogin generateNonce)
+  if (!ZK_CONFIGURED) return; // button is disabled when not configured
   const nonce = Math.random().toString(36).substring(2, 18);
   sessionStorage.setItem("zk_nonce", nonce);
-
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: ZK_LOGIN_REDIRECT,
     response_type: "id_token",
     scope: "openid email profile",
-    nonce: nonce,
+    nonce,
   });
   window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
@@ -51,9 +47,16 @@ export default function Login() {
       toast.success(mode === "login" ? "Welcome back!" : "Account created!");
       navigate("/dashboard");
     } catch (err) {
-      const msg = formatApiError(err.response?.data?.detail) || err.message;
-      setError(msg);
-      toast.error(msg);
+      // Network error — backend not reachable
+      if (!err.response) {
+        const msg = "Cannot reach the server. Make sure the backend is running on port 8001.";
+        setError(msg);
+        toast.error(msg);
+      } else {
+        const msg = formatApiError(err.response?.data?.detail) || err.message;
+        setError(msg);
+        toast.error(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -130,8 +133,9 @@ export default function Login() {
           <button
             type="button"
             onClick={onZkLogin}
-            disabled={zkLoading}
-            className="w-full flex items-center justify-center gap-3 rounded-lg border px-4 py-2.5 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-60 mb-4"
+            disabled={zkLoading || !ZK_CONFIGURED}
+            title={!ZK_CONFIGURED ? "Add REACT_APP_GOOGLE_CLIENT_ID to frontend/.env to enable" : ""}
+            className="w-full flex items-center justify-center gap-3 rounded-lg border px-4 py-2.5 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed mb-4"
             style={{ borderColor: "var(--splash-border)", color: "var(--splash-text)" }}
           >
             {zkLoading ? (
@@ -145,6 +149,7 @@ export default function Login() {
               </svg>
             )}
             {mode === "login" ? "Sign in with Google (zkLogin)" : "Register with Google (zkLogin)"}
+            {!ZK_CONFIGURED && <span className="ml-auto text-xs opacity-50">Not configured</span>}
           </button>
 
           <div className="flex items-center gap-3 mb-4">
@@ -208,11 +213,16 @@ export default function Login() {
             <div className="tabular-nums opacity-80">admin@splash.com / Splash@2026</div>
           </div>
 
-          {/* zkLogin note */}
-          {!GOOGLE_CLIENT_ID && (
-            <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: "#FFF8E1", color: "#7B5800" }}>
-              <div className="font-medium mb-0.5">zkLogin setup</div>
-              <div>Add <code className="bg-yellow-100 px-1 rounded">REACT_APP_GOOGLE_CLIENT_ID</code> to <code className="bg-yellow-100 px-1 rounded">frontend/.env</code> to enable Google zkLogin.</div>
+          {/* zkLogin setup note — only shown when not configured */}
+          {!ZK_CONFIGURED && (
+            <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: "#F0F9FF", color: "#0369A1", border: "1px solid #BAE6FD" }}>
+              <div className="font-semibold mb-1">Enable Google sign-in (zkLogin)</div>
+              <ol className="list-decimal list-inside space-y-1 opacity-80">
+                <li>Create an OAuth 2.0 Client ID at <a href="https://console.cloud.google.com" target="_blank" rel="noreferrer" className="underline">Google Cloud Console</a></li>
+                <li>Set redirect URI to <code className="bg-blue-100 px-1 rounded">http://localhost:3000/login</code></li>
+                <li>Add to <code className="bg-blue-100 px-1 rounded">frontend/.env</code>:<br/><code className="bg-blue-100 px-1 rounded">REACT_APP_GOOGLE_CLIENT_ID=your-client-id</code></li>
+                <li>Restart the frontend</li>
+              </ol>
             </div>
           )}
         </div>

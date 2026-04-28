@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap, FileText, BarChart2, Upload, ChevronDown, ArrowRight, Check, X, Menu, Globe } from "lucide-react";
 
@@ -42,6 +42,22 @@ function Navbar() {
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 function Hero() {
+  const [rate, setRate] = useState(12.9822);
+  const [rateLoading, setRateLoading] = useState(true);
+  const SEND = 1000;
+  const FEE = parseFloat((SEND * 0.015).toFixed(2));
+  const NET = SEND - FEE;
+  const RECEIVE = parseFloat((NET * rate).toFixed(2));
+
+  useEffect(() => {
+    const base = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
+    fetch(`${base}/api/fx-rate`)
+      .then(r => r.json())
+      .then(d => { if (d && d.rate) setRate(parseFloat(d.rate)); })
+      .catch(() => {})
+      .finally(() => setRateLoading(false));
+  }, []);
+
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: "var(--splash-navy)" }}>
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(34,167,240,0.18) 0%, transparent 70%)", transform: "translate(30%,-30%)" }} />
@@ -83,20 +99,24 @@ function Hero() {
             </div>
             <div className="flex items-center gap-3 px-1 mb-3">
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
-              <div className="text-xs tabular-nums" style={{ color: "var(--splash-muted)" }}>1 MYR = 12.9822 PHP</div>
+              <div className="text-xs tabular-nums" style={{ color: "var(--splash-muted)" }}>
+                {rateLoading ? "Loading rate…" : `1 MYR = ${rate.toFixed(4)} PHP`}
+              </div>
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
             </div>
             <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "rgba(0,210,160,0.07)", border: "1px solid rgba(0,210,160,0.2)" }}>
               <div className="text-xs font-medium mb-1" style={{ color: "var(--splash-muted)" }}>Recipient gets</div>
               <div className="flex items-center justify-between">
-                <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--splash-green)" }}>12,982.00</span>
+                <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--splash-green)" }}>
+                  {RECEIVE.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
                 <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5" style={{ backgroundColor: "rgba(0,210,160,0.15)", color: "#00a07a" }}>PHP</span>
               </div>
             </div>
             <div className="space-y-2 text-sm mb-5">
               <div className="flex justify-between">
                 <span style={{ color: "var(--splash-muted)" }}>Transfer fee (1.5%)</span>
-                <span className="font-medium tabular-nums" style={{ color: "var(--splash-text)" }}>RM 15.00</span>
+                <span className="font-medium tabular-nums" style={{ color: "var(--splash-text)" }}>RM {FEE.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span style={{ color: "var(--splash-muted)" }}>Estimated arrival</span>
