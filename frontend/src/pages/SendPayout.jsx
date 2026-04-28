@@ -82,44 +82,110 @@ export default function SendPayout() {
   const [fpxStage, setFpxStage] = useState(null); // null | "bank-pick" | "authorizing" | "done"
   const [fpxBank, setFpxBank] = useState("Maybank2u");
 
+  // Lazy-load Razorpay checkout script when needed
+  const loadRazorpay = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+
+  const createRecipientAndTransfer = async () => {
+    let recId;
+    try {
+      const { data: rec } = await api.post("/recipients", {
+        name: recipient.name, country: "PH", bank: recipient.bank,
+        account_number: recipient.account_number, mobile: recipient.mobile,
+      });
+      recId = rec.id;
+    } catch (e) {
+      if (e.response?.status === 409) {
+        const { data: list } = await api.get("/recipients");
+        const match = list.find((r) => r.bank === recipient.bank && r.account_number.replace(/\s/g, "") === recipient.account_number.replace(/\s/g, ""));
+        if (!match) throw e;
+        recId = match.id;
+        toast.info(`Reusing existing recipient: ${match.name}`);
+      } else throw e;
+    }
+    const { data } = await api.post("/transfers", {
+      recipient_id: recId, send_amount_myr: parseFloat(amount), reference, note,
+    });
+    return data;
+  };
+
   const confirm = async () => {
-    // Step A: show FPX bank picker (Curlec-style mock)
-    setFpxStage("bank-pick");
+    setCreating(true);
+    try {
+      // 1. Create the transfer record (status=pending) before kicking off payment
+      const tx = await createRecipientAndTransfer();
+      setTransfer(tx);
+
+      // 2. Ask backend whether to use real Razorpay/Curlec or mock FPX
+      const { data: init } = await api.post(`/transfers/${tx.id}/init-payment`);
+
+      if (init.mocked) {
+        // Show mocked Curlec-style modal
+        setCreating(false);
+        setFpxStage("bank-pick");
+        return;
+      }
+
+      // 3. Open real Razorpay checkout
+      const ok = await loadRazorpay();
+      if (!ok) throw new Error("Could not load Razorpay checkout");
+      const rzp = new window.Razorpay({
+        key: init.key_id,
+        amount: init.amount,
+        currency: init.currency,
+        order_id: init.order_id,
+        name: "Splash",
+        description: `Payout to ${recipient.name} (${init.reference})`,
+        prefill: { name: init.name, email: init.email },
+        theme: { color: "#0A1E3F" },
+        method: { netbanking: true, upi: false, card: false, wallet: false },
+        handler: async (res) => {
+          try {
+            await api.post(`/transfers/${tx.id}/verify-payment`, {
+              razorpay_order_id: res.razorpay_order_id,
+              razorpay_payment_id: res.razorpay_payment_id,
+              razorpay_signature: res.razorpay_signature,
+            });
+            toast.success("FPX payment authorized");
+            setStep(4);
+          } catch (e) {
+            toast.error(formatApiError(e.response?.data?.detail) || "Payment verification failed");
+          } finally {
+            setCreating(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            toast.info("Payment cancelled");
+            setCreating(false);
+          },
+        },
+      });
+      rzp.open();
+    } catch (e) {
+      toast.error(formatApiError(e.response?.data?.detail) || e.message || "Failed to start payment");
+      setCreating(false);
+    }
   };
 
   const completeFpxFlow = async () => {
+    // Mocked Curlec FPX simulation when real keys are absent
     setFpxStage("authorizing");
     setCreating(true);
     try {
-      // Save recipient first (or reuse if duplicate)
-      let recId;
-      try {
-        const { data: rec } = await api.post("/recipients", {
-          name: recipient.name, country: "PH", bank: recipient.bank,
-          account_number: recipient.account_number, mobile: recipient.mobile,
-        });
-        recId = rec.id;
-      } catch (e) {
-        if (e.response?.status === 409) {
-          // duplicate — find existing by bank + account
-          const { data: list } = await api.get("/recipients");
-          const match = list.find((r) => r.bank === recipient.bank && r.account_number.replace(/\s/g, "") === recipient.account_number.replace(/\s/g, ""));
-          if (!match) throw e;
-          recId = match.id;
-          toast.info(`Reusing existing recipient: ${match.name}`);
-        } else throw e;
-      }
-      // Simulate FPX authorization delay
       await new Promise((r) => setTimeout(r, 1600));
-      const { data } = await api.post("/transfers", {
-        recipient_id: recId, send_amount_myr: parseFloat(amount), reference, note,
-      });
-      setTransfer(data);
       setFpxStage(null);
       setStep(4);
       toast.success("Payment submitted!");
     } catch (e) {
-      toast.error(formatApiError(e.response?.data?.detail) || "Failed to submit payment");
+      toast.error(formatApiError(e.response?.data?.detail) || "Failed");
       setFpxStage(null);
     } finally {
       setCreating(false);

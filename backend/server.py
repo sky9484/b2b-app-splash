@@ -139,6 +139,9 @@ def fetch_fx_rate() -> float:
 
 SUI_EXPLORER_BASE = "https://suiscan.xyz/mainnet/tx"
 
+# Local services (Curlec real flow + Sui Move contract)
+from services import curlec_service, sui_service  # noqa: E402
+
 def gen_sui_tx_hash() -> str:
     return "0x" + uuid.uuid4().hex + uuid.uuid4().hex[:16]
 
@@ -368,6 +371,10 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
     tid = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
     sui_hash = gen_sui_tx_hash()
+    sui_explorer = f"{SUI_EXPLORER_BASE}/{sui_hash}"  # default mock; replaced below if real
+    if sui_service.is_configured():
+        # Mark explorer base to testnet up front so UI link is correct even before record
+        sui_explorer = sui_service.explorer_url(sui_hash)
     doc = {
         "id": tid, "user_id": user["id"], "recipient_id": rec["id"],
         "recipient_name": rec["name"], "recipient_bank": rec["bank"],
@@ -382,7 +389,10 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
         "settlement_seconds": random.randint(180, 300),
         "created_at": now.isoformat(),
         "sui_tx_hash": sui_hash,
-        "sui_explorer_url": f"{SUI_EXPLORER_BASE}/{sui_hash}",
+        "sui_explorer_url": sui_explorer,
+        "sui_real": False,
+        "curlec_order_id": None,
+        "curlec_payment_id": None,
         "stages": [
             {"key": "fpx", "label": "FPX payment received", "desc": "Your bank transfer completed successfully", "done": True, "ts": now.isoformat()},
             {"key": "luno", "label": "MYR converted to USDC on Luno", "desc": f"{q['send_amount_myr']:.2f} MYR → {round(q['send_amount_myr']/19.4, 2)} USDC", "done": True, "ts": (now + timedelta(seconds=20)).isoformat()},
@@ -409,17 +419,42 @@ async def advance_transfer(tid: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Transfer not found")
     stages = t["stages"]
     now = datetime.now(timezone.utc).isoformat()
-    advanced = False
+    advanced_key = None
     for s in stages:
         if not s["done"]:
             s["done"] = True
             s["ts"] = now
-            advanced = True
+            advanced_key = s["key"]
             break
     new_status = "completed" if all(s["done"] for s in stages) else "pending"
-    await db.transfers.update_one({"id": tid}, {"$set": {"stages": stages, "status": new_status}})
-    t["stages"] = stages
-    t["status"] = new_status
+    update = {"stages": stages, "status": new_status}
+
+    # Real Sui Move call when the "sui" stage fires (if not already real)
+    if advanced_key == "sui" and sui_service.is_configured() and not t.get("sui_real"):
+        try:
+            digest = await sui_service.record_settlement_async(
+                ref_id=t["reference"],
+                myr_minor=int(round(t["send_amount_myr"] * 100)),
+                php_minor=int(round(t["receive_amount_php"] * 100)),
+                rate_bp=int(round(t["rate"] * 10000)),
+                recipient_hash_bytes=sui_service.recipient_hash(
+                    t["recipient_name"], t["recipient_bank"], t["recipient_account"]
+                ),
+            )
+            if digest:
+                update["sui_tx_hash"] = digest
+                update["sui_explorer_url"] = sui_service.explorer_url(digest)
+                update["sui_real"] = True
+                # Update the stage description with the real digest
+                for s in stages:
+                    if s["key"] == "sui":
+                        s["desc"] = f"Settlement hash: {digest[:10]}…{digest[-6:]} (testnet)"
+                update["stages"] = stages
+        except Exception as e:
+            logger.warning(f"sui record_settlement raised: {e}")
+
+    await db.transfers.update_one({"id": tid}, {"$set": update})
+    t.update(update)
     # Notify on completion
     if new_status == "completed" and t.get("status_notified") != "completed":
         await db.transfers.update_one({"id": tid}, {"$set": {"status_notified": "completed"}})
@@ -434,6 +469,82 @@ async def advance_transfer(tid: str, user=Depends(get_current_user)):
                 f"Splash: ₱{t['receive_amount_php']:.2f} from {user.get('name','')} has been credited to your {t['recipient_bank'].split(' (')[0]} account. Ref {t['reference']}",
             )
     return t
+
+# ---------- Curlec / Razorpay (real FPX) ----------
+@api.post("/transfers/{tid}/init-payment")
+async def init_payment(tid: str, user=Depends(get_current_user)):
+    """Returns either a real Razorpay/Curlec order (when configured) or {mocked: true}."""
+    t = await db.transfers.find_one({"id": tid, "user_id": user["id"]}, {"_id": 0})
+    if not t:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+    if not curlec_service.is_configured():
+        return {"mocked": True, "reference": t["reference"]}
+    order = curlec_service.create_order(
+        amount_myr=t["send_amount_myr"],
+        receipt=f"splash-{t['reference']}",
+        notes={"reference": t["reference"], "transfer_id": tid, "user_email": user["email"]},
+    )
+    if not order:
+        return {"mocked": True, "reference": t["reference"], "error": "razorpay create_order failed"}
+    await db.transfers.update_one({"id": tid}, {"$set": {"curlec_order_id": order["id"]}})
+    return {
+        "mocked": False,
+        "key_id": curlec_service.public_key_id(),
+        "order_id": order["id"],
+        "amount": order["amount"],
+        "currency": order["currency"],
+        "reference": t["reference"],
+        "name": user.get("name", ""),
+        "email": user.get("email", ""),
+    }
+
+
+@api.post("/transfers/{tid}/verify-payment")
+async def verify_payment(tid: str, body: dict, user=Depends(get_current_user)):
+    """Frontend handler callback after Razorpay checkout success."""
+    order_id = body.get("razorpay_order_id")
+    payment_id = body.get("razorpay_payment_id")
+    signature = body.get("razorpay_signature")
+    if not (order_id and payment_id and signature):
+        raise HTTPException(status_code=400, detail="Missing razorpay fields")
+    if not curlec_service.verify_payment_signature(order_id, payment_id, signature):
+        raise HTTPException(status_code=400, detail="Invalid Razorpay signature")
+    await db.transfers.update_one(
+        {"id": tid, "user_id": user["id"]},
+        {"$set": {"curlec_payment_id": payment_id}},
+    )
+    return {"ok": True}
+
+
+@app.post("/api/webhooks/curlec")
+async def curlec_webhook(request: Request):
+    """Curlec/Razorpay webhook. Verifies HMAC signature and progresses stages."""
+    raw = await request.body()
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    if not curlec_service.verify_webhook_signature(raw, signature):
+        raise HTTPException(status_code=401, detail="Invalid signature")
+    payload = await request.json()
+    event = payload.get("event", "")
+    payment = payload.get("payload", {}).get("payment", {}).get("entity", {})
+    notes = payment.get("notes") or {}
+    tid = notes.get("transfer_id")
+    if not tid:
+        return {"ok": True, "ignored": True}
+    if event == "payment.captured":
+        await db.transfers.update_one(
+            {"id": tid},
+            {"$set": {"curlec_payment_id": payment.get("id")}},
+        )
+        # Auto-advance: the "fpx" stage is already done at create time; no-op for now.
+        # The standard advance loop continues client-side.
+        logger.info(f"[CURLEC] payment.captured for transfer {tid}")
+    elif event == "payment.failed":
+        await db.transfers.update_one(
+            {"id": tid},
+            {"$set": {"status": "failed", "curlec_payment_id": payment.get("id")}},
+        )
+        logger.info(f"[CURLEC] payment.failed for transfer {tid}")
+    return {"ok": True}
 
 @api.get("/transfers/{tid}/receipt")
 async def transfer_receipt(tid: str, user=Depends(get_current_user)):

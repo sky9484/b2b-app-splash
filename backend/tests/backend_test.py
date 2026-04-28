@@ -364,3 +364,192 @@ def test_sms_mock_on_completion_with_mobile(session, auth):
 def test_receipt_404_for_unknown_transfer(session, auth):
     r = session.get(f"{API}/transfers/not-a-real-id-xyz/receipt", timeout=10)
     assert r.status_code == 404
+
+
+
+# ---------- Iteration 3: Curlec/Razorpay + Sui Move integration tests ----------
+import hmac as _hmac
+import hashlib as _hashlib
+import json as _json
+
+
+def _create_test_transfer(session):
+    """Helper: create a recipient + transfer, return (rid, tid, ref)."""
+    rec = {"name": "TEST_I3_Rec", "country": "PH", "bank": "BDO Unibank",
+           "account_number": "I3 0001 0001", "mobile": "+63 900 000 1010"}
+    # cleanup
+    r = session.get(f"{API}/recipients", timeout=10)
+    for x in r.json():
+        if x.get("name") == "TEST_I3_Rec":
+            session.delete(f"{API}/recipients/{x['id']}", timeout=10)
+    rr = session.post(f"{API}/recipients", json=rec, timeout=10)
+    assert rr.status_code == 200, rr.text
+    rid = rr.json()["id"]
+    rt = session.post(f"{API}/transfers", json={"recipient_id": rid, "send_amount_myr": 500}, timeout=15)
+    assert rt.status_code == 200, rt.text
+    return rid, rt.json()["id"], rt.json()["reference"]
+
+
+def test_transfer_has_iteration3_fields(session, auth):
+    """New fields: sui_real=False, curlec_order_id=None, curlec_payment_id=None."""
+    rid, tid, _ = _create_test_transfer(session)
+    try:
+        r = session.get(f"{API}/transfers/{tid}", timeout=10)
+        assert r.status_code == 200
+        t = r.json()
+        assert t.get("sui_real") is False
+        assert t.get("curlec_order_id") is None
+        assert t.get("curlec_payment_id") is None
+    finally:
+        session.delete(f"{API}/recipients/{rid}", timeout=10)
+
+
+def test_init_payment_returns_mocked_when_no_keys(session, auth):
+    """POST /api/transfers/{tid}/init-payment with no RAZORPAY_KEY_ID returns mocked:true."""
+    rid, tid, ref = _create_test_transfer(session)
+    try:
+        r = session.post(f"{API}/transfers/{tid}/init-payment", timeout=10)
+        assert r.status_code == 200, r.text
+        d = r.json()
+        assert d.get("mocked") is True
+        assert d.get("reference") == ref
+        # Should not have order_id / key_id in mocked path
+        assert "order_id" not in d
+    finally:
+        session.delete(f"{API}/recipients/{rid}", timeout=10)
+
+
+def test_init_payment_404_unknown_transfer(session, auth):
+    r = session.post(f"{API}/transfers/does-not-exist-xyz/init-payment", timeout=10)
+    assert r.status_code == 404
+
+
+def test_verify_payment_400_invalid_signature(session, auth):
+    """verify-payment with bogus signature returns 400 (Invalid Razorpay signature)."""
+    rid, tid, _ = _create_test_transfer(session)
+    try:
+        body = {"razorpay_order_id": "order_xxx", "razorpay_payment_id": "pay_xxx",
+                "razorpay_signature": "deadbeef"}
+        r = session.post(f"{API}/transfers/{tid}/verify-payment", json=body, timeout=10)
+        assert r.status_code == 400, r.text
+        assert "signature" in r.json().get("detail", "").lower()
+    finally:
+        session.delete(f"{API}/recipients/{rid}", timeout=10)
+
+
+def test_verify_payment_400_missing_fields(session, auth):
+    rid, tid, _ = _create_test_transfer(session)
+    try:
+        r = session.post(f"{API}/transfers/{tid}/verify-payment", json={}, timeout=10)
+        assert r.status_code == 400
+        assert "missing" in r.json().get("detail", "").lower()
+    finally:
+        session.delete(f"{API}/recipients/{rid}", timeout=10)
+
+
+def test_curlec_webhook_401_missing_signature():
+    """No X-Razorpay-Signature header -> 401."""
+    r = requests.post(f"{BASE_URL}/api/webhooks/curlec", json={"event": "payment.captured"}, timeout=10)
+    assert r.status_code == 401
+
+
+def test_curlec_webhook_401_bad_signature():
+    body = _json.dumps({"event": "payment.captured"}).encode()
+    r = requests.post(f"{BASE_URL}/api/webhooks/curlec", data=body,
+                      headers={"X-Razorpay-Signature": "0" * 64, "Content-Type": "application/json"},
+                      timeout=10)
+    assert r.status_code == 401
+
+
+def test_curlec_webhook_valid_signature_payment_captured(session, auth):
+    """Set RAZORPAY_WEBHOOK_SECRET in backend transiently via env-update endpoint?
+    We cannot mutate the running backend env, so instead verify the signature path
+    by re-creating the same hmac the server expects; if the secret is unset, the
+    request still 401s. To meaningfully test, we instead validate the curlec_service
+    function directly via a dedicated test below, AND verify the webhook returns
+    401 when secret is unset (already covered).
+
+    Since the running backend has RAZORPAY_WEBHOOK_SECRET="" in .env, any signed
+    payload will still be rejected (verify_webhook_signature returns False when
+    secret missing). We assert that explicit behavior here.
+    """
+    secret = "test_secret_iter3"
+    payload = {"event": "payment.captured",
+               "payload": {"payment": {"entity": {"id": "pay_test_1", "notes": {"transfer_id": "any"}}}}}
+    body = _json.dumps(payload).encode()
+    sig = _hmac.new(secret.encode(), body, _hashlib.sha256).hexdigest()
+    r = requests.post(f"{BASE_URL}/api/webhooks/curlec", data=body,
+                      headers={"X-Razorpay-Signature": sig, "Content-Type": "application/json"},
+                      timeout=10)
+    # Backend has RAZORPAY_WEBHOOK_SECRET="" so signature check returns False -> 401
+    assert r.status_code == 401, f"expected 401 (no secret configured) got {r.status_code}: {r.text}"
+
+
+def test_curlec_service_signature_helpers():
+    """Direct unit test of curlec_service signature helpers (in-process)."""
+    import sys
+    sys.path.insert(0, "/app/backend")
+    from services import curlec_service
+
+    # Webhook signature
+    os.environ["RAZORPAY_WEBHOOK_SECRET"] = "shh_test"
+    body = b'{"event":"payment.captured"}'
+    good = _hmac.new(b"shh_test", body, _hashlib.sha256).hexdigest()
+    assert curlec_service.verify_webhook_signature(body, good) is True
+    assert curlec_service.verify_webhook_signature(body, "bad") is False
+    os.environ["RAZORPAY_WEBHOOK_SECRET"] = ""
+    assert curlec_service.verify_webhook_signature(body, good) is False  # no secret -> False
+
+    # Payment signature
+    os.environ["RAZORPAY_KEY_SECRET"] = "ks_test"
+    order_id, payment_id = "order_1", "pay_1"
+    expected = _hmac.new(b"ks_test", f"{order_id}|{payment_id}".encode(), _hashlib.sha256).hexdigest()
+    assert curlec_service.verify_payment_signature(order_id, payment_id, expected) is True
+    assert curlec_service.verify_payment_signature(order_id, payment_id, "bad") is False
+    os.environ["RAZORPAY_KEY_SECRET"] = ""
+
+    # is_configured
+    assert curlec_service.is_configured() is False
+
+
+def test_sui_service_unconfigured_and_helpers():
+    import sys
+    sys.path.insert(0, "/app/backend")
+    from services import sui_service
+
+    assert sui_service.is_configured() is False  # SUI_PACKAGE_ID empty
+    h = sui_service.recipient_hash("Juan", "BDO", "1234")
+    assert isinstance(h, bytes) and len(h) == 32
+    url = sui_service.explorer_url("0xabc")
+    assert url.startswith("https://suiscan.xyz/testnet/tx/")
+
+
+def test_advance_does_not_call_sui_when_unconfigured(session, auth):
+    """When SUI_* env keys empty, advance through 'sui' stage keeps sui_real=False
+    and does NOT change sui_tx_hash from the original mock value."""
+    rid, tid, _ = _create_test_transfer(session)
+    try:
+        # initial mock hash
+        t0 = session.get(f"{API}/transfers/{tid}", timeout=10).json()
+        original_hash = t0["sui_tx_hash"]
+        assert original_hash.startswith("0x")
+        assert t0["sui_real"] is False
+
+        # advance through all stages (5)
+        last = None
+        for _ in range(6):
+            r = session.post(f"{API}/transfers/{tid}/advance", timeout=10)
+            assert r.status_code == 200
+            last = r.json()
+            if last["status"] == "completed":
+                break
+
+        # sui_real must remain False; sui_tx_hash unchanged
+        assert last["sui_real"] is False
+        assert last["sui_tx_hash"] == original_hash
+        # sui stage description should still contain truncated hash form (mock)
+        sui_stage = next(s for s in last["stages"] if s["key"] == "sui")
+        assert "Settlement hash" in sui_stage["desc"]
+        assert "testnet" not in sui_stage["desc"]  # only added on real path
+    finally:
+        session.delete(f"{API}/recipients/{rid}", timeout=10)
