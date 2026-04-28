@@ -43,6 +43,7 @@ module splash::settlement {
 
     /// Append a settlement record. Called server-side by the Splash backend
     /// after the off-chain MYR -> USDC leg confirms.
+    #[allow(lint(public_entry))]
     public entry fun record_settlement(
         registry: &mut Registry,
         ref_id: vector<u8>,

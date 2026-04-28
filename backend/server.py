@@ -82,9 +82,10 @@ async def get_current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def set_auth_cookie(response: Response, token: str):
+    is_prod = os.environ.get("ENV", "development") == "production"
     response.set_cookie(
         key="access_token", value=token, httponly=True,
-        secure=True, samesite="none",
+        secure=is_prod, samesite="none" if is_prod else "lax",
         max_age=ACCESS_TOKEN_TTL_MIN * 60, path="/",
     )
 
@@ -759,7 +760,11 @@ app.include_router(api)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_URL", "*")],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        os.environ.get("FRONTEND_URL", "http://localhost:3000"),
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
