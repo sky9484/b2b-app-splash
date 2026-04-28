@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-route
 import { AuthProvider, useAuth } from "./lib/auth";
 import { Toaster } from "./components/ui/sonner";
 import Layout from "./components/Layout";
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import SendPayout from "./pages/SendPayout";
@@ -24,10 +25,23 @@ function ProtectedRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
+// Shows landing if not logged in, redirects to /dashboard if logged in
+function LandingRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="spinner-ring" />
+    </div>
+  );
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <Landing />;
+}
+
+// Shows login if not logged in, redirects to /dashboard if logged in
 function PublicOnly({ children }) {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -37,8 +51,12 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            {/* Landing page — public, auto-redirects to /dashboard if logged in */}
+            <Route path="/" element={<LandingRoute />} />
+            {/* Auth */}
             <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            {/* Protected app */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/send" element={<ProtectedRoute><SendPayout /></ProtectedRoute>} />
             <Route path="/transfers" element={<ProtectedRoute><Transfers /></ProtectedRoute>} />
             <Route path="/recipients" element={<ProtectedRoute><Recipients /></ProtectedRoute>} />

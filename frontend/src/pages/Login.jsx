@@ -49,7 +49,7 @@ export default function Login() {
       if (mode === "login") await login(email, password);
       else await register({ email, password, name, company });
       toast.success(mode === "login" ? "Welcome back!" : "Account created!");
-      navigate("/");
+      navigate("/dashboard");
     } catch (err) {
       const msg = formatApiError(err.response?.data?.detail) || err.message;
       setError(msg);

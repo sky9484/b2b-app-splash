@@ -8,7 +8,7 @@ import {
 } from "./ui/dropdown-menu";
 
 const NAV = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/send", label: "Send Payout", icon: Send },
   { to: "/transfers", label: "Transfers", icon: ArrowLeftRight },
   { to: "/recipients", label: "Recipients", icon: Users },
