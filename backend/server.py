@@ -138,13 +138,19 @@ def fetch_fx_rate() -> float:
         logger.warning(f"FX fetch failed, using fallback: {e}")
         return _fx_cache["rate"] or 12.9822
 
-SUI_EXPLORER_BASE_MOCK = "https://suiscan.xyz/mainnet/tx"  # demo links — only valid when sui_real=true switches to testnet
+SUI_EXPLORER_BASE_MOCK = "https://suiscan.xyz/testnet/tx"  # testnet explorer for all transfers
 
 # Local services (Curlec real flow + Sui Move contract)
 from services import curlec_service, sui_service  # noqa: E402
 
 def gen_sui_tx_hash() -> str:
-    return "0x" + uuid.uuid4().hex + uuid.uuid4().hex[:16]
+    """Generate a mock Sui transaction digest in base58 format (44 chars).
+    Real digests look like: 9aD32Evmsipi82TQUNb8NtMxjfcAaHVDR4SQhuNxh3D7
+    When SUI_PRIVATE_KEY is configured, the real digest replaces this on the 'sui' stage.
+    """
+    import base58
+    random_bytes = uuid.uuid4().bytes + uuid.uuid4().bytes  # 32 bytes
+    return base58.b58encode(random_bytes).decode("utf-8")
 
 def notify_email(to: str, subject: str, body: str) -> dict:
     """Send email via Resend if RESEND_API_KEY set, else console log."""
