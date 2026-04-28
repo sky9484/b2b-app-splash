@@ -4,7 +4,7 @@ import api, { formatMYR, formatDate, initials, avatarColor, formatApiError } fro
 import { Plus, Search, MoreHorizontal, Send, Trash2, Edit3, Loader2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../components/ui/dialog";
 import { toast } from "sonner";
 
 const BANKS = [
@@ -183,6 +183,7 @@ function RecipientEditModal({ open, recipient, onClose, onSaved }) {
       <DialogContent className="sm:max-w-md" data-testid="recipient-edit-modal">
         <DialogHeader>
           <DialogTitle>{isNew ? "Add new recipient" : "Edit recipient"}</DialogTitle>
+          <DialogDescription>Save bank and account details for fast future payouts.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <Field label="Full name">

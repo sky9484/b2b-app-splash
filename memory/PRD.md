@@ -13,6 +13,17 @@ Build a B2B cross-border payment dashboard called "Splash" for Malaysian SMEs se
 - **Live FX**: open.er-api.com (free, cached 10 min). Falls back to 12.9822 MYR→PHP if API unreachable.
 - **Mocked**: Luno / Sui / Coins.ph / FPX integrations are simulated client-side via 5-stage advance polling.
 
+## What's Implemented (Updated 2026-04-28 — Iteration 2)
+**MVP (initial):** All 6 routes (Login, Dashboard, Send 4-step wizard, Transfers, Recipients, Batch), auth, seeded data, live FX, mocked payment timeline.
+
+**Iteration 2 additions:**
+- ✅ Recipient edit modal (Shadcn Dialog) + duplicate-account detection (409 with name) on POST/PUT.
+- ✅ PDF receipts via reportlab — branded layout, returned by `GET /api/transfers/{id}/receipt`. Download buttons in Send wizard Track step + Transfers row dropdown.
+- ✅ Sui Explorer deep-links: every transfer carries `sui_tx_hash` + `sui_explorer_url` (suiscan.xyz/mainnet/tx/...). "View on Sui Explorer" button in Track step + Transfers menu.
+- ✅ Email notifications via Resend stub: `notify_email()` helper triggers on transfer-created and on completion. Falls back to console `[EMAIL MOCK]` log when `RESEND_API_KEY` is absent.
+- ✅ SMS notifications via Twilio stub: `notify_sms()` triggers on completion if recipient has mobile. Falls back to `[SMS MOCK]` console log without creds.
+- ✅ Mocked Curlec/FPX redirect screen — bank picker (Maybank2u, CIMB, PBe, RHB, Hong Leong, AmBank) + 1.6s authorizing spinner before transfer is actually created.
+
 ## What's Implemented (2026-04-28 — MVP)
 - ✅ Auth: register / login / logout / me with JWT in httpOnly cookie + token in body.
 - ✅ Auto-seeded admin (`admin@splash.com / Splash@2026`) with 12 PH recipients + 20 transfers (15 completed, 3 pending, 2 failed).
