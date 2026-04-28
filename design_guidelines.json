@@ -1,0 +1,160 @@
+{
+  "project_name": "Splash",
+  "theme": "Light",
+  "archetype": "Swiss & High-Contrast (Archetype 4) - Adapted for B2B Trust and Functionality",
+  "design_philosophy": {
+    "core_principle": "Functionality First, Trust Always. Clean fintech dashboard inspired by Mercury and Wise. Eliminate friction, highlight transparency, and optimize for data clarity.",
+    "emotional_tone": "Professional, authoritative, transparent, and seamless.",
+    "anti_patterns": [
+      "No crypto aesthetics, no Web3 jargon, no dark-tech-mint, no full-screen gradients.",
+      "No center-aligned text for data or dense content.",
+      "Avoid heavy drop shadows; use 1px borders for structure."
+    ]
+  },
+  "colors": {
+    "primary": {
+      "DEFAULT": "#0A1E3F",
+      "foreground": "#FFFFFF"
+    },
+    "accent": {
+      "DEFAULT": "#22A7F0",
+      "foreground": "#FFFFFF"
+    },
+    "success": {
+      "DEFAULT": "#00D2A0",
+      "foreground": "#FFFFFF"
+    },
+    "warning": {
+      "DEFAULT": "#FFB800",
+      "foreground": "#1A202C"
+    },
+    "background": "#F4F7FB",
+    "surface": "#FFFFFF",
+    "text": {
+      "primary": "#1A202C",
+      "muted": "#718096"
+    },
+    "border": "#E2E8F0"
+  },
+  "typography": {
+    "font_family": "Inter",
+    "headings": {
+      "weight": "600",
+      "style": "tracking-tight",
+      "h1": "text-3xl sm:text-4xl",
+      "h2": "text-2xl sm:text-3xl",
+      "h3": "text-xl sm:text-2xl",
+      "h4": "text-lg sm:text-xl"
+    },
+    "body": {
+      "weight": "400",
+      "style": "leading-relaxed text-base"
+    },
+    "numbers": {
+      "feature": "tabular-nums",
+      "usage": "Use tabular-nums for all currency, dates, timers, and metrics to prevent horizontal shifting."
+    }
+  },
+  "spacing_and_layout": {
+    "base": "4px",
+    "scale": [8, 12, 16, 24, 32, 48],
+    "container_padding": "p-6 md:p-8",
+    "card_style": "bg-white border border-[#E2E8F0] rounded-xl shadow-sm overflow-hidden",
+    "grid_system": "Use The 'Control Room' Grid (Mode B): Tight gaps (gap-4 or gap-6). Use 12-column grids on desktop, stacking to 1-column on mobile. Ensure vertical rhythm.",
+    "alignment": "Left-align dense data, labels, inputs. Center only standalone status messages or empty states."
+  },
+  "components": {
+    "strategy": "Use customized Shadcn UI components heavily optimized for the provided color palette.",
+    "buttons": {
+      "primary": "bg-[#0A1E3F] text-white hover:bg-[#0A1E3F]/90 rounded-lg px-6 py-2.5 font-medium transition-colors",
+      "secondary": "bg-[#F4F7FB] text-[#0A1E3F] hover:bg-[#E2E8F0] rounded-lg px-6 py-2.5 font-medium transition-colors",
+      "accent": "bg-[#22A7F0] text-white hover:bg-[#22A7F0]/90 rounded-lg px-6 py-2.5 font-medium transition-colors"
+    },
+    "cards": "Flat background (#FFFFFF), 1px solid border (#E2E8F0), no heavy drop shadow. Internal padding must be generous (p-6).",
+    "tables": "Shadcn Table. Left-aligned columns. Right-aligned for currency amounts. Hover states on rows (hover:bg-[#F4F7FB]). Sticky header for long lists.",
+    "forms": "Shadcn Form, Input, Select. Left-aligned labels. Use clear focus states (focus:ring-2 focus:ring-[#22A7F0]).",
+    "badges": "Rounded-full px-2.5 py-0.5 text-xs font-medium. Success: bg-[#00D2A0]/10 text-[#00D2A0]. Pending: bg-[#FFB800]/10 text-[#FFB800].",
+    "wizards": "Vertical timeline or horizontal step progress bar. Clear active/completed/pending states."
+  },
+  "pages": {
+    "dashboard": {
+      "layout": "4-column grid for stat cards at top, followed by a 2-column layout (Main table left 8 cols, Quick Actions right 4 cols).",
+      "features": ["4 Stat Cards: Total Sent, Active Recipients, Pending Transfers, Avg Settlement", "Recent Transfers Table", "Quick Actions Sidebar"]
+    },
+    "send_payout": {
+      "layout": "Centered narrow container (max-w-3xl) to maintain focus.",
+      "features": [
+        "4-step wizard: Recipient -> Amount/Quote -> Review -> Track",
+        "Live currency conversion display (MYR to PHP)",
+        "Quote countdown timer (tabular-nums, warning colors when < 10s)",
+        "5-stage payment progress timeline",
+        "Confetti animation on success using react-confetti"
+      ]
+    },
+    "transfers": {
+      "layout": "Full-width data table layout.",
+      "features": ["Filters (Date, Status, Recipient)", "Status Chips (Completed, Pending, Failed)", "Pagination", "Export CSV button"]
+    },
+    "recipients": {
+      "layout": "Responsive grid layout (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 or 4).",
+      "features": ["Cards with avatar", "Last sent date", "Total sent amount", "Quick 'Send' button"]
+    },
+    "batch_payouts": {
+      "layout": "Centered container for upload zone.",
+      "features": ["Drag-and-drop CSV upload zone with dashed border", "Template download link", "Validation summary before execution"]
+    },
+    "login": {
+      "layout": "Split screen or centered card on light background.",
+      "features": ["Email/Password login", "Brand logo", "Clean, distraction-free environment"]
+    }
+  },
+  "motion_and_interaction": {
+    "hover_states": "Subtle background color shifts on tables and buttons. Slight lift (-translate-y-0.5) on recipient cards.",
+    "transitions": "Use 'transition-all duration-200 ease-in-out' for standard interactions.",
+    "loading": "Use skeleton loaders for data fetching. No full-page spinners.",
+    "success": "Confetti on successful payment. Use react-confetti library, trigger on reaching final wizard step."
+  },
+  "icons": {
+    "library": "lucide-react",
+    "style": "stroke-width-2, clean and legible.",
+    "usage": "Use icons for clear visual hierarchy on buttons, sidebar, and status indicators."
+  },
+  "media_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1609436132311-e4b0c9370469?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0cyUyMGhlYWRzaG90c3xlbnwwfHx8fDE3NzczODUwNTF8MA&ixlib=rb-4.1.0&q=85",
+      "category": "recipient_avatar",
+      "description": "Professional avatar 1"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1576558656222-ba66febe3dec?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0cyUyMGhlYWRzaG90c3xlbnwwfHx8fDE3NzczODUwNTF8MA&ixlib=rb-4.1.0&q=85",
+      "category": "recipient_avatar",
+      "description": "Professional avatar 2"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1609371497456-3a55a205d5eb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0cyUyMGhlYWRzaG90c3xlbnwwfHx8fDE3NzczODUwNTF8MA&ixlib=rb-4.1.0&q=85",
+      "category": "recipient_avatar",
+      "description": "Professional avatar 3"
+    },
+    {
+      "url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Njl8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBidXNpbmVzcyUyMHBvcnRyYWl0cyUyMGhlYWRzaG90c3xlbnwwfHx8fDE3NzczODUwNTF8MA&ixlib=rb-4.1.0&q=85",
+      "category": "recipient_avatar",
+      "description": "Professional avatar 4"
+    }
+  ],
+  "accessibility": {
+    "contrast": "Ensure text-primary (#1A202C) and text-muted (#718096) have sufficient contrast against surface (#FFFFFF) and background (#F4F7FB).",
+    "focus": "All interactive elements must have visible focus rings.",
+    "test_attributes": "All interactive and key informational elements MUST include 'data-testid' attribute (e.g., data-testid='send-payout-button')."
+  },
+  "instructions_to_main_agent": [
+    "Strictly adhere to the provided color palette. Do not invent new colors or gradients.",
+    "Implement the 5 required pages: Dashboard, Send Payout, Transfers, Recipients, Batch Payouts, plus Login.",
+    "In the Send Payout flow, implement a quote countdown timer displaying live conversion (MYR to PHP) and a 5-stage payment progress timeline.",
+    "Ensure 'tabular-nums' is applied to all numeric data (timers, currencies, table data).",
+    "Use Lucide-react for all icons.",
+    "Use standard Tailwind classes + Shadcn UI components. Ensure all components use the design system's exact HEX codes.",
+    "Include 'react-confetti' for the success state in the payment wizard.",
+    "Make sure all grid items are direct children of grid containers.",
+    "Inject the provided avatar URLs for recipient cards and tables to avoid placeholder images."
+  ]
+}
