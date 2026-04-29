@@ -44,9 +44,11 @@ function Navbar() {
 function Hero() {
   const [rate, setRate] = useState(12.9822);
   const [rateLoading, setRateLoading] = useState(true);
-  const SEND = 1000;
+  const [sendAmount, setSendAmount] = useState(1000);
+
+  const SEND = sendAmount || 0;
   const FEE = parseFloat((SEND * 0.015).toFixed(2));
-  const NET = SEND - FEE;
+  const NET = Math.max(SEND - FEE, 0);
   const RECEIVE = parseFloat((NET * rate).toFixed(2));
 
   useEffect(() => {
@@ -69,8 +71,8 @@ function Hero() {
             Now live for Malaysian SMEs
           </div>
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight text-white mb-5">
-            Send money to the Philippines.{" "}
-            <span style={{ color: "var(--splash-cyan)" }}>Fast, simple, affordable.</span>
+            Make Money Move{" "}
+            <span style={{ color: "var(--splash-cyan)" }}>Faster, Cheaper & Wiser</span>
           </h1>
           <p className="text-base sm:text-lg leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.72)" }}>
             One flat <strong className="text-white">1.5% all-in fee</strong>. No hidden charges. Transfers settle in under 5 minutes directly to your recipient's Philippine bank account.
@@ -86,34 +88,55 @@ function Hero() {
         </div>
         <div className="flex justify-center md:justify-end">
           <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: "#fff", border: "1px solid var(--splash-border)" }}>
+            {/* Header */}
             <div className="flex items-center justify-between mb-5">
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Transfer preview</span>
-              <span className="text-xs font-medium rounded-full px-2.5 py-0.5" style={{ backgroundColor: "rgba(0,210,160,0.12)", color: "var(--splash-green)" }}>Live rate</span>
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Preview</span>
+              <span className="text-xs font-medium rounded-full px-2.5 py-0.5 flex items-center gap-1" style={{ backgroundColor: "rgba(0,210,160,0.12)", color: "var(--splash-green)" }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: "var(--splash-green)" }} />
+                {rateLoading ? "Fetching rate…" : "Live rate"}
+              </span>
             </div>
+
+            {/* You send — editable */}
             <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: "var(--splash-bg)" }}>
-              <div className="text-xs font-medium mb-1" style={{ color: "var(--splash-muted)" }}>You send</div>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--splash-text)" }}>1,000.00</span>
-                <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5" style={{ backgroundColor: "var(--splash-navy)", color: "#fff" }}>MYR</span>
+              <div className="text-xs font-medium mb-2" style={{ color: "var(--splash-muted)" }}>You send</div>
+              <div className="flex items-center justify-between gap-2">
+                <input
+                  type="number"
+                  min="100"
+                  max="100000"
+                  step="100"
+                  value={sendAmount}
+                  onChange={e => setSendAmount(Math.max(0, parseFloat(e.target.value) || 0))}
+                  className="text-2xl font-semibold tabular-nums bg-transparent outline-none w-full"
+                  style={{ color: "var(--splash-text)" }}
+                />
+                <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 shrink-0" style={{ backgroundColor: "var(--splash-navy)", color: "#fff" }}>🇲🇾 MYR</span>
               </div>
             </div>
+
+            {/* Rate row */}
             <div className="flex items-center gap-3 px-1 mb-3">
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
-              <div className="text-xs tabular-nums" style={{ color: "var(--splash-muted)" }}>
-                {rateLoading ? "Loading rate…" : `1 MYR = ${rate.toFixed(4)} PHP`}
+              <div className="text-xs tabular-nums font-medium" style={{ color: "var(--splash-muted)" }}>
+                {rateLoading ? "—" : `1 MYR = ${rate.toFixed(4)} PHP`}
               </div>
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
             </div>
+
+            {/* Recipient gets */}
             <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "rgba(0,210,160,0.07)", border: "1px solid rgba(0,210,160,0.2)" }}>
-              <div className="text-xs font-medium mb-1" style={{ color: "var(--splash-muted)" }}>Recipient gets</div>
-              <div className="flex items-center justify-between">
+              <div className="text-xs font-medium mb-2" style={{ color: "var(--splash-muted)" }}>Recipient gets</div>
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-2xl font-semibold tabular-nums" style={{ color: "var(--splash-green)" }}>
-                  {RECEIVE.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {rateLoading ? "—" : RECEIVE.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
-                <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5" style={{ backgroundColor: "rgba(0,210,160,0.15)", color: "#00a07a" }}>PHP</span>
+                <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 shrink-0" style={{ backgroundColor: "rgba(0,210,160,0.15)", color: "#00a07a" }}>🇵🇭 PHP</span>
               </div>
             </div>
-            <div className="space-y-2 text-sm mb-5">
+
+            {/* Fee breakdown */}
+            <div className="space-y-2 text-sm mb-4">
               <div className="flex justify-between">
                 <span style={{ color: "var(--splash-muted)" }}>Transfer fee (1.5%)</span>
                 <span className="font-medium tabular-nums" style={{ color: "var(--splash-text)" }}>RM {FEE.toFixed(2)}</span>
@@ -123,6 +146,15 @@ function Hero() {
                 <span className="font-medium" style={{ color: "var(--splash-green)" }}>&lt; 5 minutes</span>
               </div>
             </div>
+
+            {/* Compliance notice */}
+            <div className="flex gap-2.5 rounded-xl p-3 mb-4" style={{ backgroundColor: "#FFF8E6", border: "1px solid #FFE4A0" }}>
+              <span className="text-base shrink-0 mt-0.5">⚠️</span>
+              <p className="text-xs leading-relaxed" style={{ color: "#7A5500" }}>
+                This account must only be used for your own business transactions. Any transactions performed on behalf of others will result in account deactivation.
+              </p>
+            </div>
+
             <Link to="/login" className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: "var(--splash-navy)" }}>
               Send now <ArrowRight size={15} />
             </Link>
