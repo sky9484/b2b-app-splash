@@ -1,25 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;1,14..32,400&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --splash-navy: #0A1E3F;
-  --splash-cyan: #22A7F0;
-  --splash-green: #00D2A0;
-  --splash-amber: #FFB800;
-  --splash-bg: #F4F7FB;
-  --splash-surface: #FFFFFF;
-  --splash-text: #1A202C;
-  --splash-muted: #718096;
-  --splash-border: #E2E8F0;
+  /* Neptune palette */
+  --splash-navy:   #0F2C59;
+  --splash-cyan:   #00D2FF;
+  --splash-green:  #00D2A0;
+  --splash-amber:  #FFB800;
+  --splash-bg:     #f4f6f8;
+  --splash-surface:#FFFFFF;
+  --splash-text:   #0F2C59;
+  --splash-muted:  #6B7A99;
+  --splash-border: #E4E9F2;
   --splash-danger: #E53E3E;
+
+  /* Shadows */
+  --shadow-card:   0 10px 30px rgba(15,44,89,0.06);
+  --shadow-hover:  0 20px 40px rgba(15,44,89,0.12);
+  --shadow-btn:    0 4px 14px rgba(0,210,255,0.35);
 }
 
-html, body, #root {
-  height: 100%;
-}
+html, body, #root { height: 100%; }
 
 body {
   margin: 0;
@@ -28,63 +32,114 @@ body {
   color: var(--splash-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: 'cv11', 'ss01';
+  font-feature-settings: 'cv11', 'ss01', 'kern';
 }
 
 .tabular-nums { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum'; }
-
 code, .mono { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --background: 220 20% 97%;
+    --foreground: 222 71% 21%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 222 71% 21%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 71% 14%;
+    --popover-foreground: 222 71% 21%;
+    --primary: 222 71% 21%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 217 71% 14%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 200 87% 54%;
-    --accent-foreground: 0 0% 100%;
+    --secondary: 220 20% 96%;
+    --secondary-foreground: 222 71% 21%;
+    --muted: 220 20% 96%;
+    --muted-foreground: 220 15% 50%;
+    --accent: 193 100% 50%;
+    --accent-foreground: 222 71% 21%;
     --destructive: 0 75% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 200 87% 54%;
-    --radius: 0.625rem;
+    --border: 220 20% 90%;
+    --input: 220 20% 90%;
+    --ring: 193 100% 50%;
+    --radius: 0.75rem;
   }
 }
 
 @layer base {
   * { @apply border-border; }
   body { @apply bg-background text-foreground; }
-  h1,h2,h3,h4 { letter-spacing: -0.01em; }
+  h1, h2, h3, h4 { letter-spacing: -0.02em; font-weight: 700; }
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
+/* ── Neptune card style ─────────────────────────────────────────────────── */
+.neptune-card {
+  background: #fff;
+  border-radius: 1.25rem;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--splash-border);
+  transition: box-shadow 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.neptune-card:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* ── Neptune CTA button ─────────────────────────────────────────────────── */
+.neptune-btn {
+  background: var(--splash-cyan);
+  color: var(--splash-navy);
+  font-weight: 700;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-btn);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.neptune-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(0,210,255,0.45);
+}
+.neptune-btn:active {
+  transform: scale(0.97);
+}
+
+/* ── Neptune input ──────────────────────────────────────────────────────── */
+.neptune-input {
+  border: 2px solid var(--splash-border);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  background: #fff;
+  color: var(--splash-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  width: 100%;
+}
+.neptune-input:focus {
+  border-color: var(--splash-cyan);
+  box-shadow: 0 0 0 3px rgba(0,210,255,0.18);
+}
+.neptune-input::placeholder { color: #A0AABF; font-weight: 400; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+::-webkit-scrollbar-thumb { background: #C8D0E0; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #A0AABF; }
 
-/* Animation utility */
+/* ── Animations ─────────────────────────────────────────────────────────── */
 @keyframes splashFadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: splashFadeUp 0.4s ease-out both; }
+.animate-fade-up { animation: splashFadeUp 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
 
 @keyframes splashSpin { to { transform: rotate(360deg); } }
 .spinner-ring {
   width: 18px; height: 18px; border-radius: 999px;
-  border: 2px solid #e2e8f0; border-top-color: var(--splash-cyan);
-  animation: splashSpin 0.8s linear infinite;
+  border: 2px solid #E4E9F2;
+  border-top-color: var(--splash-cyan);
+  animation: splashSpin 0.7s linear infinite;
 }
 
-/* Selection */
-::selection { background: rgba(34, 167, 240, 0.2); color: var(--splash-text); }
+/* ── Selection ──────────────────────────────────────────────────────────── */
+::selection { background: rgba(0,210,255,0.18); color: var(--splash-text); }

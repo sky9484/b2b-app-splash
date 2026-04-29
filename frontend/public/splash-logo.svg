@@ -1,4 +1,74 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect width="1024" height="1024" fill="#000000"/>
-  <text x="512" y="580" font-family="Arial Black, Arial, sans-serif" font-size="220" font-weight="900" fill="white" text-anchor="middle" letter-spacing="-5">SPLASH</text>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="outerGrad" cx="40%" cy="60%" r="65%">
+      <stop offset="0%" stop-color="#1565C0"/>
+      <stop offset="100%" stop-color="#0D47A1"/>
+    </radialGradient>
+    <radialGradient id="midGrad" cx="45%" cy="55%" r="60%">
+      <stop offset="0%" stop-color="#1E88E5"/>
+      <stop offset="100%" stop-color="#1565C0"/>
+    </radialGradient>
+    <radialGradient id="innerGrad" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#29B6F6"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </radialGradient>
+    <radialGradient id="dropGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#40D4F5"/>
+      <stop offset="100%" stop-color="#0288D1"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Outer wave circle -->
+  <path d="M 50 95
+    C 22 95 5 75 5 52
+    C 5 28 22 8 48 6
+    C 55 5.5 60 7 63 10
+    C 55 10 42 15 35 25
+    C 25 38 26 58 38 68
+    C 48 76 62 75 70 65
+    C 78 55 76 40 66 33
+    C 72 33 80 38 83 48
+    C 88 65 76 90 55 94
+    C 53 94.5 51 95 50 95 Z"
+    fill="url(#outerGrad)"/>
+
+  <!-- Mid wave layer -->
+  <path d="M 50 88
+    C 30 88 14 72 14 52
+    C 14 35 26 20 42 16
+    C 36 22 30 32 30 44
+    C 30 62 43 74 58 72
+    C 70 70 78 58 75 46
+    C 79 50 80 57 78 64
+    C 72 80 62 88 50 88 Z"
+    fill="url(#midGrad)"/>
+
+  <!-- Inner wave curl -->
+  <path d="M 50 80
+    C 36 80 24 68 24 54
+    C 24 42 32 32 44 29
+    C 40 34 38 42 40 50
+    C 42 62 52 68 62 64
+    C 68 61 70 54 67 47
+    C 70 50 71 56 69 62
+    C 64 74 57 80 50 80 Z"
+    fill="url(#innerGrad)"/>
+
+  <!-- White inner circle (hollow of wave) -->
+  <circle cx="48" cy="52" r="16" fill="white"/>
+
+  <!-- Splash drops -->
+  <!-- Main large drop -->
+  <ellipse cx="58" cy="12" rx="4.5" ry="6.5" fill="url(#dropGrad)" transform="rotate(-10 58 12)"/>
+  <!-- Left drop -->
+  <ellipse cx="46" cy="8" rx="3" ry="4.5" fill="url(#dropGrad)" transform="rotate(15 46 8)"/>
+  <!-- Right drop -->
+  <ellipse cx="70" cy="18" rx="3" ry="4.5" fill="url(#dropGrad)" transform="rotate(-25 70 18)"/>
+  <!-- Small right drop -->
+  <ellipse cx="76" cy="28" rx="2" ry="3" fill="url(#dropGrad)" transform="rotate(-35 76 28)"/>
+
+  <!-- Splash arc connecting drops to wave -->
+  <path d="M 52 28 Q 54 18 58 12" stroke="#29B6F6" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M 48 26 Q 47 16 46 8" stroke="#29B6F6" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M 60 32 Q 66 24 70 18" stroke="#29B6F6" stroke-width="2" fill="none" stroke-linecap="round"/>
 </svg>

@@ -9,7 +9,7 @@ function Navbar() {
     <nav className="sticky top-0 z-50 w-full" style={{ backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--splash-border)" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2.5 shrink-0">
-          <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg" style={{ backgroundColor: "#000" }} />
+          <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg"  />
           <span className="text-lg font-semibold tracking-tight" style={{ color: "var(--splash-navy)" }}>Splash</span>
         </Link>
         <div className="hidden md:flex items-center gap-8">
@@ -358,7 +358,7 @@ function Footer() {
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="flex flex-col gap-3">
             <Link to="/" className="flex items-center gap-2.5">
-              <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg" style={{ backgroundColor: "#000" }} />
+              <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg"  />
               <span className="text-lg font-semibold text-white">Splash</span>
             </Link>
             <p className="text-sm max-w-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Fast, affordable MYR to PHP transfers for Malaysian businesses.</p>

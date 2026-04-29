@@ -77,7 +77,7 @@ export default function Login() {
       <div className="hidden md:flex flex-col justify-between p-12 text-white relative overflow-hidden" style={{ backgroundColor: "var(--splash-navy)" }}>
         {/* Logo */}
         <div className="flex items-center gap-3 relative z-10">
-          <img src="/splash-logo.svg" alt="Splash" className="h-12 w-12 rounded-xl object-cover" style={{ backgroundColor: "#000" }} />
+          <img src="/splash-logo.svg" alt="Splash" className="h-12 w-12 rounded-xl object-contain" />
           <div>
             <div className="text-xl font-semibold tracking-tight">Splash</div>
             <div className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>MY → PH PAYOUTS</div>
@@ -118,7 +118,7 @@ export default function Login() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="md:hidden flex items-center gap-3 mb-8">
-            <img src="/splash-logo.svg" alt="Splash" className="h-10 w-10 rounded-lg object-cover" style={{ backgroundColor: "#000" }} />
+            <img src="/splash-logo.svg" alt="Splash" className="h-10 w-10 rounded-lg object-contain" />
             <span className="text-lg font-semibold">Splash</span>
           </div>
 

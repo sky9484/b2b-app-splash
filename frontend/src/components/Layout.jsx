@@ -35,11 +35,12 @@ export default function Layout({ children }) {
       <aside
         className={`${mobileOpen ? "block" : "hidden"} md:flex fixed md:relative z-30 w-64 flex-shrink-0 flex-col`}
         style={{
-          backgroundColor: "var(--splash-navy)",
+          background: "linear-gradient(180deg, #0F2C59 0%, #0A1E3F 100%)",
           borderRight: "1px solid rgba(255,255,255,0.06)",
           height: "100vh",
           position: "sticky",
           top: 0,
+          boxShadow: "4px 0 24px rgba(15,44,89,0.15)",
         }}
         data-testid="app-sidebar"
       >
@@ -48,8 +49,7 @@ export default function Layout({ children }) {
           <img
             src="/splash-logo.svg"
             alt="Splash"
-            className="h-9 w-9 rounded-lg object-cover"
-            style={{ backgroundColor: "#000" }}
+            className="h-9 w-9 rounded-lg object-contain"
           />
           <div>
             <div className="text-white font-semibold text-lg tracking-tight">Splash</div>
@@ -70,8 +70,9 @@ export default function Layout({ children }) {
                 data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors"
                 style={{
-                  backgroundColor: active ? "rgba(34,167,240,0.16)" : "transparent",
-                  color: active ? "#fff" : "rgba(255,255,255,0.72)",
+                  backgroundColor: active ? "rgba(0,210,255,0.15)" : "transparent",
+                  color: active ? "#00D2FF" : "rgba(255,255,255,0.65)",
+                  borderLeft: active ? "3px solid #00D2FF" : "3px solid transparent",
                 }}
               >
                 <Icon size={18} strokeWidth={2} />
@@ -122,7 +123,8 @@ export default function Layout({ children }) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
-        <header className="h-16 flex items-center justify-between px-6 md:px-8 border-b bg-white flex-shrink-0" style={{ borderColor: "var(--splash-border)" }}>
+        <header className="h-16 flex items-center justify-between px-6 md:px-8 border-b bg-white flex-shrink-0"
+          style={{ borderColor: "var(--splash-border)", boxShadow: "0 1px 0 var(--splash-border)" }}>
           <div className="flex items-center gap-3">
             <button
               className="md:hidden p-2 rounded hover:bg-slate-100"
