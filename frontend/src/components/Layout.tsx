@@ -273,7 +273,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <a href={SUI_EXPLORER_URL} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ink-2)' }}>
+                <a href={SUI_EXPLORER_URL} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs" style={{ color: 'var(--ink-2)' }}>
                   <ExternalLink size={12} /> View Contract on Sui
                 </a>
               </DropdownMenuItem>
