@@ -1,22 +1,23 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./lib/auth";
-import { Toaster } from "./components/ui/sonner";
-import Layout from "./components/Layout";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import SendPayout from "./pages/SendPayout";
-import Transfers from "./pages/Transfers";
-import Recipients from "./pages/Recipients";
-import Batch from "./pages/Batch";
+import { AuthProvider, useAuth } from "@/lib/auth";
+import { Toaster } from "@/components/ui/sonner";
+import Layout from "@/components/Layout";
+import Landing from "@/pages/Landing.jsx";
+import Login from "@/pages/Login.jsx";
+import Dashboard from "@/pages/Dashboard.jsx";
+import SendPayout from "@/pages/SendPayout.jsx";
+import Transfers from "@/pages/Transfers.jsx";
+import Recipients from "@/pages/Recipients.jsx";
+import Batch from "@/pages/Batch.jsx";
+import { ReactNode } from "react";
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" data-testid="auth-loading">
+      <div className="min-h-screen flex items-center justify-center bg-ink" data-testid="auth-loading">
         <div className="spinner-ring" />
       </div>
     );
@@ -25,11 +26,10 @@ function ProtectedRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
-// Shows landing if not logged in, redirects to /dashboard if logged in
 function LandingRoute() {
   const { user, loading } = useAuth();
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-ink">
       <div className="spinner-ring" />
     </div>
   );
@@ -37,12 +37,11 @@ function LandingRoute() {
   return <Landing />;
 }
 
-// Shows login if not logged in, redirects to /dashboard if logged in
-function PublicOnly({ children }) {
+function PublicOnly({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
-  return children;
+  return <>{children}</>;
 }
 
 function App() {
@@ -51,11 +50,8 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            {/* Landing page — public, auto-redirects to /dashboard if logged in */}
             <Route path="/" element={<LandingRoute />} />
-            {/* Auth */}
             <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-            {/* Protected app */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/send" element={<ProtectedRoute><SendPayout /></ProtectedRoute>} />
             <Route path="/transfers" element={<ProtectedRoute><Transfers /></ProtectedRoute>} />
@@ -71,5 +67,3 @@ function App() {
 }
 
 export default App;
-
-

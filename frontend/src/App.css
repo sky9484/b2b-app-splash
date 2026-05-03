@@ -1,2 +1,65 @@
 /* App-level overrides only. Most styling comes from Tailwind + index.css */
-.App { min-height: 100vh; }
+.App {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Ensure all containers respect viewport width */
+* {
+  max-width: 100%;
+}
+
+/* Responsive text sizing */
+@media (max-width: 640px) {
+  body {
+    font-size: 13px;
+  }
+  h1 { font-size: 24px !important; }
+  h2 { font-size: 20px !important; }
+  h3 { font-size: 18px !important; }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 13.5px;
+  }
+  h1 { font-size: 28px !important; }
+  h2 { font-size: 22px !important; }
+  h3 { font-size: 19px !important; }
+}
+
+@media (min-width: 1025px) {
+  body {
+    font-size: 14px;
+  }
+  h1 { font-size: 32px !important; }
+  h2 { font-size: 24px !important; }
+  h3 { font-size: 20px !important; }
+}
+
+/* Ensure images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ensure tables are responsive */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* Ensure forms are responsive */
+input, textarea, select, button {
+  max-width: 100%;
+}
+
+/* Prevent horizontal scroll */
+body, html {
+  overflow-x: hidden;
+  width: 100%;
+}

@@ -199,10 +199,10 @@ export default function SendPayout() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto" data-testid="send-payout-page">
+    <div className="w-full max-w-6xl mx-auto" data-testid="send-payout-page">
       <div className="mb-6">
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Send a payout</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--splash-muted)" }}>From your bank to theirs in under 5 minutes.</p>
+        <p className="text-sm mt-1" style={{ color: "var(--ink-3)" }}>From your bank to theirs in under 5 minutes.</p>
       </div>
 
       {/* Stepper */}
@@ -216,22 +216,22 @@ export default function SendPayout() {
                 <div
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition"
                   style={{
-                    backgroundColor: done ? "var(--splash-green)" : active ? "var(--splash-cyan)" : "#E2E8F0",
+                    backgroundColor: done ? "var(--success)" : active ? "var(--indigo)" : "#E2E8F0",
                     color: done || active ? "#fff" : "#718096",
                   }}
                   data-testid={`step-${s.id}-indicator`}
                 >
                   {done ? <Check size={14} /> : s.id}
                 </div>
-                <div className="text-xs font-medium hidden sm:block" style={{ color: active ? "var(--splash-text)" : "var(--splash-muted)" }}>{s.label}</div>
+                <div className="text-xs font-medium hidden sm:block" style={{ color: active ? "var(--ink)" : "var(--ink-3)" }}>{s.label}</div>
               </div>
-              {i < STEPS.length - 1 && <div className="flex-1 h-px mx-3" style={{ backgroundColor: done ? "var(--splash-green)" : "var(--splash-border)" }} />}
+              {i < STEPS.length - 1 && <div className="flex-1 h-px mx-3" style={{ backgroundColor: done ? "var(--success)" : "var(--outline)" }} />}
             </div>
           );
         })}
       </div>
 
-      <div className="bg-white rounded-xl border p-6 md:p-8 animate-fade-up" style={{ borderColor: "var(--splash-border)" }}>
+      <div className="bg-white rounded-xl border p-6 md:p-8 animate-fade-up" style={{ borderColor: "var(--outline)" }}>
         {step === 1 && <StepRecipient recipient={recipient} setRecipient={setRecipient} onContinue={() => setStep(2)} />}
         {step === 2 && <StepAmount amount={amount} setAmount={setAmount} quote={quote} showFee={showFee} setShowFee={setShowFee} reference={reference} setReference={setReference} note={note} setNote={setNote} onBack={() => setStep(1)} onContinue={() => setStep(3)} />}
         {step === 3 && <StepReview recipient={recipient} amount={amount} quote={quote} countdown={countdown} confirming={creating} onBack={() => setStep(2)} onConfirm={confirm} />}
@@ -262,27 +262,27 @@ function FPXModal({ stage, bank, setBank, amount, onCancel, onAuthorize }) {
     { id: "AmOnline", label: "AmOnline", color: "#E2231A" },
   ];
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(10,30,63,0.6)", backdropFilter: "blur(4px)" }} data-testid="fpx-modal">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(30,27,75,0.6)", backdropFilter: "blur(4px)" }} data-testid="fpx-modal">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden animate-fade-up">
-        <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#F4F7FB", borderBottom: "1px solid var(--splash-border)" }}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "var(--raised)", borderBottom: "1px solid var(--outline)" }}>
           <div className="flex items-center gap-2">
-            <ShieldCheck size={16} style={{ color: "var(--splash-green)" }} />
+            <ShieldCheck size={16} style={{ color: "var(--success)" }} />
             <span className="text-sm font-semibold tracking-tight">FPX · Secure online banking</span>
           </div>
-          <button onClick={onCancel} className="text-xs font-medium" style={{ color: "var(--splash-muted)" }} data-testid="fpx-cancel">Cancel</button>
+          <button onClick={onCancel} className="text-xs font-medium" style={{ color: "var(--ink-3)" }} data-testid="fpx-cancel">Cancel</button>
         </div>
 
         {stage === "bank-pick" && (
           <div className="p-6">
-            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--splash-muted)" }}>Amount to debit</div>
+            <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "var(--ink-3)" }}>Amount to debit</div>
             <div className="text-2xl font-semibold tabular-nums mb-5">RM {amount.toLocaleString("en-MY", { minimumFractionDigits: 2 })}</div>
             <div className="text-sm font-medium mb-3">Choose your bank</div>
             <div className="grid grid-cols-2 gap-2 mb-5">
               {banks.map((b) => (
                 <button
                   key={b.id} onClick={() => setBank(b.id)} data-testid={`fpx-bank-${b.id}`}
-                  className="text-left rounded-lg border p-3 transition hover:border-[#22A7F0]"
-                  style={{ borderColor: bank === b.id ? "var(--splash-cyan)" : "var(--splash-border)", backgroundColor: bank === b.id ? "rgba(34,167,240,0.06)" : "white" }}
+                  className="text-left rounded-lg border p-3 transition hover:border-[#4338CA]"
+                  style={{ borderColor: bank === b.id ? "var(--indigo)" : "var(--outline)", backgroundColor: bank === b.id ? "rgba(67,56,202,0.06)" : "white" }}
                 >
                   <div className="w-6 h-6 rounded mb-2" style={{ backgroundColor: b.color }} />
                   <div className="text-xs font-medium leading-tight">{b.label}</div>
@@ -292,11 +292,11 @@ function FPXModal({ stage, bank, setBank, amount, onCancel, onAuthorize }) {
             <button
               onClick={onAuthorize} data-testid="fpx-authorize"
               className="w-full rounded-lg py-3 font-semibold text-white transition hover:opacity-95"
-              style={{ backgroundColor: "var(--splash-navy)" }}
+              style={{ backgroundColor: "var(--sidebar)" }}
             >
               Continue to {bank}
             </button>
-            <p className="text-xs text-center mt-3" style={{ color: "var(--splash-muted)" }}>Powered by FPX · Cleared by PayNet Malaysia</p>
+            <p className="text-xs text-center mt-3" style={{ color: "var(--ink-3)" }}>Powered by FPX · Cleared by PayNet Malaysia</p>
           </div>
         )}
 
@@ -304,7 +304,7 @@ function FPXModal({ stage, bank, setBank, amount, onCancel, onAuthorize }) {
           <div className="p-10 text-center">
             <div className="mx-auto w-12 h-12 mb-4"><div className="spinner-ring" style={{ width: 48, height: 48, borderWidth: 4 }} /></div>
             <div className="font-semibold">Authorizing with {bank}…</div>
-            <div className="text-xs mt-2" style={{ color: "var(--splash-muted)" }}>Securely debiting RM {amount.toLocaleString("en-MY", { minimumFractionDigits: 2 })} from your account.</div>
+            <div className="text-xs mt-2" style={{ color: "var(--ink-3)" }}>Securely debiting RM {amount.toLocaleString("en-MY", { minimumFractionDigits: 2 })} from your account.</div>
           </div>
         )}
       </div>
@@ -322,7 +322,7 @@ function StepRecipient({ recipient, setRecipient, onContinue }) {
         <input data-testid="recipient-name" className={inputCls} placeholder="Juan Dela Cruz" value={recipient.name} onChange={set("name")} />
       </Field>
       <Field label="Destination country">
-        <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5" style={{ borderColor: "var(--splash-border)", backgroundColor: "#F8FAFC" }}>
+        <div className="flex items-center gap-2 rounded-lg border px-3 py-2.5" style={{ borderColor: "var(--outline)", backgroundColor: "var(--raised)" }}>
           <span className="text-lg">🇵🇭</span>
           <span className="text-sm">Philippines</span>
         </div>
@@ -340,7 +340,7 @@ function StepRecipient({ recipient, setRecipient, onContinue }) {
       </Field>
       <Field label="Recipient mobile number (optional)">
         <div className="flex">
-          <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 text-sm font-medium" style={{ borderColor: "var(--splash-border)", backgroundColor: "#F8FAFC", color: "var(--splash-text)" }}>+63</span>
+          <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 text-sm font-medium" style={{ borderColor: "var(--outline)", backgroundColor: "var(--raised)", color: "var(--ink)" }}>+63</span>
           <input data-testid="recipient-mobile" className={inputCls + " rounded-l-none"} placeholder="9XX XXX XXXX" value={recipient.mobile} onChange={set("mobile")} />
         </div>
       </Field>
@@ -350,7 +350,7 @@ function StepRecipient({ recipient, setRecipient, onContinue }) {
       </label>
       <div className="flex justify-between pt-2">
         <button className={btnSecondary} onClick={() => window.history.back()}>Cancel</button>
-        <button data-testid="step-recipient-continue" onClick={onContinue} disabled={!valid} className={btnPrimary} style={{ backgroundColor: "var(--splash-green)", opacity: valid ? 1 : 0.5 }}>
+        <button data-testid="step-recipient-continue" onClick={onContinue} disabled={!valid} className={btnPrimary} style={{ backgroundColor: "var(--success)", opacity: valid ? 1 : 0.5 }}>
           Continue <ChevronRight size={16} />
         </button>
       </div>
@@ -359,7 +359,7 @@ function StepRecipient({ recipient, setRecipient, onContinue }) {
 }
 
 function StepAmount({ amount, setAmount, quote, showFee, setShowFee, reference, setReference, note, setNote, onBack, onContinue }) {
-  const valid = parseFloat(amount) >= 100 && parseFloat(amount) <= 100000;
+  const valid = parseFloat(amount) >= 100 && parseFloat(amount) <= 150000;
   return (
     <div className="space-y-5" data-testid="step-amount">
       <h2 className="text-lg font-semibold tracking-tight">Amount & quote</h2>
@@ -367,30 +367,30 @@ function StepAmount({ amount, setAmount, quote, showFee, setShowFee, reference, 
       <div>
         <div className="text-xs font-medium mb-1.5">You send (MYR)</div>
         <div className="flex">
-          <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 text-sm font-semibold" style={{ borderColor: "var(--splash-border)", backgroundColor: "#F8FAFC" }}>RM</span>
+          <span className="inline-flex items-center px-4 rounded-l-lg border border-r-0 text-sm font-semibold" style={{ borderColor: "var(--outline)", backgroundColor: "var(--raised)" }}>RM</span>
           <input
             data-testid="send-amount"
-            type="number" step="0.01" min="100" max="100000"
+            type="number" step="0.01" min="100" max="150000"
             value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00"
             className="flex-1 rounded-r-lg border bg-white px-3 py-3 text-2xl font-semibold tabular-nums outline-none focus:ring-2"
-            style={{ borderColor: "var(--splash-border)" }}
+            style={{ borderColor: "var(--outline)" }}
           />
         </div>
-        <div className="text-xs mt-1" style={{ color: "var(--splash-muted)" }}>Min: RM 100 • Max: RM 100,000</div>
+        <div className="text-xs mt-1" style={{ color: "var(--ink-3)" }}>Min: RM 100 • Max: RM 150,000</div>
       </div>
 
-      <div className="rounded-xl p-5" style={{ backgroundColor: "#F4FEFB", border: "1px solid #B7F0DD" }}>
-        <div className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Recipient receives</div>
-        <div className="text-3xl font-semibold tabular-nums mt-1" style={{ color: "var(--splash-green)" }} data-testid="receive-amount">
+      <div className="rounded-xl p-5" style={{ backgroundColor: "var(--success-bg)", border: "1px solid var(--success-border)" }}>
+        <div className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Recipient receives</div>
+        <div className="text-3xl font-semibold tabular-nums mt-1" style={{ color: "var(--success)" }} data-testid="receive-amount">
           {quote ? formatPHP(quote.receive_amount_php) : "₱ 0.00"}
         </div>
-        <div className="text-xs mt-2 tabular-nums" style={{ color: "var(--splash-muted)" }}>
+        <div className="text-xs mt-2 tabular-nums" style={{ color: "var(--ink-3)" }}>
           {quote ? `1 MYR = ${formatNum(quote.rate, 4)} PHP` : "Enter an amount to see live rate"}
         </div>
 
         {quote && (
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: "#B7F0DD" }}>
-            <button className="text-sm font-medium flex items-center gap-1" onClick={() => setShowFee(!showFee)} data-testid="toggle-fee-breakdown" style={{ color: "var(--splash-text)" }}>
+          <div className="mt-4 pt-4 border-t" style={{ borderColor: "var(--success-border)" }}>
+            <button className="text-sm font-medium flex items-center gap-1" onClick={() => setShowFee(!showFee)} data-testid="toggle-fee-breakdown" style={{ color: "var(--ink)" }}>
               <ChevronDown size={14} className="transition-transform" style={{ transform: showFee ? "rotate(180deg)" : "none" }} />
               Fee breakdown
             </button>
@@ -402,7 +402,7 @@ function StepAmount({ amount, setAmount, quote, showFee, setShowFee, reference, 
                 <Row k="Total fee" v={formatMYR(quote.total_fee)} bold />
               </div>
             )}
-            <div className="flex justify-between items-center mt-3 pt-3 border-t text-sm font-semibold" style={{ borderColor: "#B7F0DD" }}>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t text-sm font-semibold" style={{ borderColor: "var(--success-border)" }}>
               <span>Total you'll pay</span>
               <span className="tabular-nums">{formatMYR(quote.total_debit_myr)}</span>
             </div>
@@ -419,7 +419,7 @@ function StepAmount({ amount, setAmount, quote, showFee, setShowFee, reference, 
 
       <div className="flex justify-between pt-2">
         <button onClick={onBack} className={btnSecondary}><ChevronLeft size={16}/> Back</button>
-        <button data-testid="step-amount-continue" onClick={onContinue} disabled={!valid} className={btnPrimary} style={{ backgroundColor: "var(--splash-green)", opacity: valid ? 1 : 0.5 }}>
+        <button data-testid="step-amount-continue" onClick={onContinue} disabled={!valid} className={btnPrimary} style={{ backgroundColor: "var(--success)", opacity: valid ? 1 : 0.5 }}>
           Continue <ChevronRight size={16} />
         </button>
       </div>
@@ -436,12 +436,12 @@ function StepReview({ recipient, amount, quote, countdown, confirming, onBack, o
       <h2 className="text-lg font-semibold tracking-tight">Review & confirm</h2>
 
       <div className="rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm font-medium tabular-nums"
-        style={{ backgroundColor: expiring ? "rgba(229,62,62,0.08)" : "rgba(255,184,0,0.12)", color: expiring ? "#C53030" : "#92400E" }}
+        style={{ backgroundColor: expiring ? "rgba(220,38,38,0.08)" : "rgba(217,119,6,0.12)", color: expiring ? "#991B1B" : "#92400E" }}
         data-testid="quote-countdown">
         <Loader2 size={14} className="animate-spin" /> Quote expires in {countdown}s
       </div>
 
-      <div className="rounded-xl border divide-y" style={{ borderColor: "var(--splash-border)" }}>
+      <div className="rounded-xl border divide-y" style={{ borderColor: "var(--outline)" }}>
         <Row2 k="Recipient" v={`${recipient.name} 🇵🇭`} />
         <Row2 k="Bank" v={`${recipient.bank} • ${recipient.account_number}`} />
         <Row2 k="You send" v={formatMYR(parseFloat(amount))} />
@@ -451,23 +451,23 @@ function StepReview({ recipient, amount, quote, countdown, confirming, onBack, o
         <Row2 k="Exchange rate" v={`1 MYR = ${formatNum(quote.rate, 4)} PHP`} muted />
       </div>
 
-      <div className="rounded-lg border p-4" style={{ borderColor: "var(--splash-border)" }}>
+      <div className="rounded-lg border p-4" style={{ borderColor: "var(--outline)" }}>
         <button className="text-sm font-medium flex items-center gap-1" onClick={() => setShowHow(!showHow)} data-testid="how-it-works">
           <ChevronDown size={14} style={{ transform: showHow ? "rotate(180deg)" : "none" }} className="transition-transform" />
           How it works
         </button>
         {showHow && (
-          <div className="text-sm mt-2 leading-relaxed" style={{ color: "var(--splash-muted)" }}>
+          <div className="text-sm mt-2 leading-relaxed" style={{ color: "var(--ink-3)" }}>
             Your MYR is converted to USDC on Luno, settled atomically on the Sui blockchain, and converted to PHP on Coins.ph before reaching your recipient's bank. The whole journey is fully tracked and auditable.
           </div>
         )}
       </div>
 
       <button data-testid="confirm-payment" onClick={onConfirm} disabled={confirming} className="w-full rounded-lg px-5 py-3.5 font-semibold text-white flex items-center justify-center gap-2 transition disabled:opacity-60"
-        style={{ backgroundColor: "var(--splash-green)" }}>
+        style={{ backgroundColor: "var(--success)" }}>
         {confirming ? <Loader2 size={16} className="animate-spin" /> : <>Confirm & pay via FPX <ArrowRight size={16} /></>}
       </button>
-      <p className="text-xs text-center" style={{ color: "var(--splash-muted)" }}>By confirming, you agree to Splash Terms of Service.</p>
+      <p className="text-xs text-center" style={{ color: "var(--ink-3)" }}>By confirming, you agree to Splash Terms of Service.</p>
 
       <div className="flex justify-start">
         <button onClick={onBack} className={btnSecondary}><ChevronLeft size={16}/> Back</button>
@@ -486,11 +486,11 @@ function StepTrack({ transfer, onReset }) {
       <h2 className="text-lg font-semibold tracking-tight">Payment progress</h2>
 
       {allDone && (
-        <div className="rounded-lg p-4 flex items-center gap-3" style={{ backgroundColor: "rgba(0,210,160,0.10)", border: "1px solid rgba(0,210,160,0.3)" }} data-testid="payment-complete-banner">
-          <PartyPopper size={20} style={{ color: "var(--splash-green)" }} />
+        <div className="rounded-lg p-4 flex items-center gap-3" style={{ backgroundColor: "var(--success-bg)", border: "1px solid var(--success-border)" }} data-testid="payment-complete-banner">
+          <PartyPopper size={20} style={{ color: "var(--success)" }} />
           <div>
-            <div className="font-semibold" style={{ color: "#0F8068" }}>Payment complete!</div>
-            <div className="text-sm" style={{ color: "var(--splash-muted)" }}>Funds delivered to {transfer.recipient_name}.</div>
+            <div className="font-semibold" style={{ color: "var(--success)" }}>Payment complete!</div>
+            <div className="text-sm" style={{ color: "var(--ink-3)" }}>Funds delivered to {transfer.recipient_name}.</div>
           </div>
         </div>
       )}
@@ -503,25 +503,25 @@ function StepTrack({ transfer, onReset }) {
               <div className="flex flex-col items-center">
                 <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
                   style={{
-                    backgroundColor: s.done ? "var(--splash-green)" : active ? "rgba(34,167,240,0.15)" : "#F1F5F9",
-                    border: active ? "2px solid var(--splash-cyan)" : "none",
+                    backgroundColor: s.done ? "var(--success)" : active ? "rgba(67,56,202,0.15)" : "#F1F5F9",
+                    border: active ? "2px solid var(--indigo)" : "none",
                   }}>
                   {s.done ? <Check size={14} className="text-white" /> :
                     active ? <div className="spinner-ring" style={{ width: 14, height: 14, borderWidth: 2 }} /> :
                     <div className="w-2 h-2 rounded-full bg-slate-300" />}
                 </div>
                 {i < transfer.stages.length - 1 && (
-                  <div className="w-px flex-1 mt-1" style={{ backgroundColor: s.done ? "var(--splash-green)" : "var(--splash-border)" }} />
+                  <div className="w-px flex-1 mt-1" style={{ backgroundColor: s.done ? "var(--success)" : "var(--outline)" }} />
                 )}
               </div>
               <div className="flex-1 pt-1">
-                <div className="text-sm font-semibold" style={{ color: s.done || active ? "var(--splash-text)" : "var(--splash-muted)" }}>
+                <div className="text-sm font-semibold" style={{ color: s.done || active ? "var(--ink)" : "var(--ink-3)" }}>
                   {s.label}
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: "var(--splash-muted)" }}>
+                <div className="text-xs mt-0.5" style={{ color: "var(--ink-3)" }}>
                   {s.key === "sui" ? <span className="mono">{s.desc}</span> : s.desc}
                 </div>
-                <div className="text-xs mt-1 tabular-nums" style={{ color: s.done ? "var(--splash-green)" : "var(--splash-muted)" }}>
+                <div className="text-xs mt-1 tabular-nums" style={{ color: s.done ? "var(--success)" : "var(--ink-3)" }}>
                   {s.done && s.ts ? `Completed at ${new Date(s.ts).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}` : active ? "ETA: a few seconds" : "—"}
                 </div>
               </div>
@@ -530,7 +530,7 @@ function StepTrack({ transfer, onReset }) {
         })}
       </div>
 
-      <div className="text-sm pt-2" style={{ color: "var(--splash-muted)" }}>
+      <div className="text-sm pt-2" style={{ color: "var(--ink-3)" }}>
         Estimated total time: <span className="font-medium tabular-nums">~5 minutes</span>
       </div>
 
@@ -567,7 +567,7 @@ function StepTrack({ transfer, onReset }) {
         >
           <Download size={14} /> Download receipt
         </button>
-        <button onClick={onReset} className={btnPrimary} style={{ backgroundColor: "var(--splash-navy)" }} data-testid="send-another">
+        <button onClick={onReset} className={btnPrimary} style={{ backgroundColor: "var(--sidebar)" }} data-testid="send-another">
           Send another payment
         </button>
       </div>
@@ -595,7 +595,7 @@ function Field({ label, hint, children }) {
     <label className="block">
       <div className="flex justify-between items-baseline mb-1.5">
         <div className="text-xs font-medium">{label}</div>
-        {hint && <div className="text-xs" style={{ color: "var(--splash-muted)" }}>{hint}</div>}
+        {hint && <div className="text-xs" style={{ color: "var(--ink-3)" }}>{hint}</div>}
       </div>
       {children}
     </label>
@@ -604,7 +604,7 @@ function Field({ label, hint, children }) {
 function Row({ k, v, bold }) {
   return (
     <div className="flex justify-between items-center">
-      <span style={{ color: "var(--splash-muted)" }}>{k}</span>
+      <span style={{ color: "var(--ink-3)" }}>{k}</span>
       <span className={bold ? "font-semibold" : ""}>{v}</span>
     </div>
   );
@@ -612,8 +612,8 @@ function Row({ k, v, bold }) {
 function Row2({ k, v, muted, bold, green }) {
   return (
     <div className="flex justify-between items-center px-4 py-3">
-      <span className="text-sm" style={{ color: "var(--splash-muted)" }}>{k}</span>
-      <span className={`text-sm tabular-nums ${bold ? "font-semibold" : ""}`} style={{ color: green ? "var(--splash-green)" : muted ? "var(--splash-muted)" : "var(--splash-text)" }}>{v}</span>
+      <span className="text-sm" style={{ color: "var(--ink-3)" }}>{k}</span>
+      <span className={`text-sm tabular-nums ${bold ? "font-semibold" : ""}`} style={{ color: green ? "var(--success)" : muted ? "var(--ink-3)" : "var(--ink)" }}>{v}</span>
     </div>
   );
 }

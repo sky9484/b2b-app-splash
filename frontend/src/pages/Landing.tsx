@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Zap, FileText, BarChart2, Upload, ChevronDown, ArrowRight, Check, X, Menu, Globe } from "lucide-react";
@@ -19,7 +20,7 @@ function Navbar() {
         </div>
         <div className="hidden md:flex items-center gap-3">
           <Link to="/login" className="text-sm font-medium transition-opacity hover:opacity-60" style={{ color: "var(--indigo)" }}>Sign in</Link>
-          <Link to="/login" className="text-sm font-semibold text-white rounded-lg px-4 py-2 transition-opacity hover:opacity-90" style={{ backgroundColor: "var(--indigo)" }}>Get Started</Link>
+          <Link to="/login" className="text-sm font-semibold rounded-lg px-4 py-2 transition-opacity hover:opacity-90" style={{ backgroundColor: "var(--indigo)", color: "white" }}>Get Started</Link>
         </div>
         <button className="md:hidden p-2 rounded-lg" onClick={() => setMobileOpen(v => !v)} aria-label="Toggle menu" style={{ color: "var(--indigo)" }}>
           <Menu size={22} />
@@ -62,11 +63,11 @@ function Hero() {
 
   return (
     <section className="relative overflow-hidden" style={{ backgroundColor: "var(--sidebar)" }}>
-      <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(34,167,240,0.18) 0%, transparent 70%)", transform: "translate(30%,-30%)" }} />
-      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,210,160,0.12) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
+      <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(67,56,202,0.18) 0%, transparent 70%)", transform: "translate(30%,-30%)" }} />
+      <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(5,150,137,0.12) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium mb-6" style={{ backgroundColor: "rgba(67,56,202,0.15)", color: "var(--indigo)", border: "1px solid rgba(67,56,202,0.3)" }}>
+          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium mb-6" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)", border: "1px solid var(--success-border)" }}>
             <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: "var(--success)" }} />
             Now live for Malaysian SMEs
           </div>
@@ -147,14 +148,6 @@ function Hero() {
               </div>
             </div>
 
-            {/* Compliance notice */}
-            <div className="flex gap-2.5 rounded-xl p-3 mb-4" style={{ backgroundColor: "#FFF8E6", border: "1px solid #FFE4A0" }}>
-              <span className="text-base shrink-0 mt-0.5">⚠️</span>
-              <p className="text-xs leading-relaxed" style={{ color: "#7A5500" }}>
-                This account must only be used for your own business transactions. Any transactions performed on behalf of others will result in account deactivation.
-              </p>
-            </div>
-
             <Link to="/login" className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: "var(--indigo)" }}>
               Send now <ArrowRight size={15} />
             </Link>
@@ -232,7 +225,7 @@ function PricingTable() {
     { feature: "Batch payouts", splash: true, banks: false, others: false },
     { feature: "PDF receipts", splash: true, banks: false, others: true },
   ];
-  const BoolCell = ({ val }) => val
+  const BoolCell = ({ val }: { val: boolean }) => val
     ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}><Check size={13} strokeWidth={3} /></span>
     : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--danger-bg)", color: "var(--danger)" }}><X size={13} strokeWidth={3} /></span>;
   return (
@@ -322,7 +315,7 @@ const FAQ_ITEMS = [
   { q: "What currencies are supported?", a: "Currently MYR to PHP. We are working on additional corridors — more currency pairs are coming soon." },
 ];
 
-function FAQItem({ item }) {
+function FAQItem({ item }: { item: { q: string; a: string } }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--outline)", backgroundColor: "#fff" }}>

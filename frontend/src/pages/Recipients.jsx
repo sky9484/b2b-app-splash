@@ -45,15 +45,15 @@ export default function Recipients() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Recipients</h1>
-          <p className="text-sm mt-1" style={{ color: "var(--splash-muted)" }}>{recipients.length} saved recipients across the Philippines.</p>
+          <p className="text-sm mt-1" style={{ color: "var(--ink-3)" }}>{recipients.length} saved recipients across the Philippines.</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               data-testid="search-recipients" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search recipients..."
-              className="w-56 rounded-lg border pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#22A7F0]/30"
-              style={{ borderColor: "var(--splash-border)" }}
+              className="w-56 rounded-lg border pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#4338CA]/30"
+              style={{ borderColor: "var(--outline)" }}
             />
           </div>
           <Select value={sort} onValueChange={setSort}>
@@ -72,11 +72,11 @@ export default function Recipients() {
           onClick={() => setEditing({ _new: true, name: "", bank: "", account_number: "", mobile: "" })}
           data-testid="add-new-recipient"
           className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 py-10 transition hover:bg-white hover:-translate-y-0.5"
-          style={{ borderColor: "#CBD5E0", color: "var(--splash-muted)", minHeight: 180 }}>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(34,167,240,0.12)" }}>
-            <Plus size={20} style={{ color: "var(--splash-cyan)" }} />
+          style={{ borderColor: "#CBD5E0", color: "var(--ink-3)", minHeight: 180 }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(67,56,202,0.12)" }}>
+            <Plus size={20} style={{ color: "var(--indigo)" }} />
           </div>
-          <div className="text-sm font-medium" style={{ color: "var(--splash-text)" }}>Add new recipient</div>
+          <div className="text-sm font-medium" style={{ color: "var(--ink)" }}>Add new recipient</div>
           <div className="text-xs">Save details for future payouts</div>
         </button>
 
@@ -84,16 +84,16 @@ export default function Recipients() {
           const acctLast4 = (r.account_number || "").replace(/\s/g, "").slice(-4);
           return (
             <div key={r.id} className="group relative bg-white rounded-xl border p-5 transition hover:-translate-y-0.5 hover:shadow-md"
-              style={{ borderColor: "var(--splash-border)" }} data-testid={`recipient-card-${r.id}`}>
+              style={{ borderColor: "var(--outline)" }} data-testid={`recipient-card-${r.id}`}>
               <div className="flex items-start gap-3">
                 <div className="w-11 h-11 rounded-full flex items-center justify-center text-sm font-semibold text-white flex-shrink-0"
                   style={{ backgroundColor: avatarColor(r.name) }}>{initials(r.name)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold tracking-tight truncate">{r.name}</div>
-                  <div className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--splash-muted)" }}>
+                  <div className="text-xs flex items-center gap-1 mt-0.5" style={{ color: "var(--ink-3)" }}>
                     <span>🇵🇭</span><span className="truncate">{r.bank?.split(" (")[0]}</span>
                   </div>
-                  <div className="text-xs mono mt-0.5" style={{ color: "var(--splash-muted)" }}>•••• {acctLast4}</div>
+                  <div className="text-xs mono mt-0.5" style={{ color: "var(--ink-3)" }}>•••• {acctLast4}</div>
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -106,24 +106,24 @@ export default function Recipients() {
                 </DropdownMenu>
               </div>
 
-              <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-2 text-xs" style={{ borderColor: "var(--splash-border)" }}>
+              <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-2 text-xs" style={{ borderColor: "var(--outline)" }}>
                 <div>
-                  <div style={{ color: "var(--splash-muted)" }}>Last sent</div>
+                  <div style={{ color: "var(--ink-3)" }}>Last sent</div>
                   <div className="tabular-nums font-medium mt-0.5">
                     {r.last_amount_myr ? `${formatMYR(r.last_amount_myr)}` : "—"}
                   </div>
-                  <div className="tabular-nums" style={{ color: "var(--splash-muted)" }}>{r.last_sent_at ? `on ${formatDate(r.last_sent_at)}` : "Never"}</div>
+                  <div className="tabular-nums" style={{ color: "var(--ink-3)" }}>{r.last_sent_at ? `on ${formatDate(r.last_sent_at)}` : "Never"}</div>
                 </div>
                 <div>
-                  <div style={{ color: "var(--splash-muted)" }}>Total sent</div>
+                  <div style={{ color: "var(--ink-3)" }}>Total sent</div>
                   <div className="tabular-nums font-medium mt-0.5">{formatMYR(r.total_sent_myr || 0)}</div>
-                  <div className="tabular-nums" style={{ color: "var(--splash-muted)" }}>{r.total_count || 0} payments</div>
+                  <div className="tabular-nums" style={{ color: "var(--ink-3)" }}>{r.total_count || 0} payments</div>
                 </div>
               </div>
 
               <Link to="/send" data-testid={`send-to-${r.id}`}
                 className="mt-4 w-full rounded-lg py-2 text-sm font-medium text-white inline-flex items-center justify-center gap-1.5 transition opacity-0 group-hover:opacity-100"
-                style={{ backgroundColor: "var(--splash-green)" }}>
+                style={{ backgroundColor: "var(--success)" }}>
                 <Send size={13} /> Send payment
               </Link>
             </div>
@@ -202,7 +202,7 @@ function RecipientEditModal({ open, recipient, onClose, onSaved }) {
           </Field>
           <Field label="Mobile (optional)">
             <div className="flex">
-              <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 text-sm font-medium" style={{ borderColor: "var(--splash-border)", backgroundColor: "#F8FAFC" }}>+63</span>
+              <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 text-sm font-medium" style={{ borderColor: "var(--outline)", backgroundColor: "var(--raised)" }}>+63</span>
               <input data-testid="edit-mobile" value={form.mobile} onChange={(e) => setForm({ ...form, mobile: e.target.value })} className={inputCls + " rounded-l-none"} placeholder="9XX XXX XXXX" />
             </div>
           </Field>
@@ -214,7 +214,7 @@ function RecipientEditModal({ open, recipient, onClose, onSaved }) {
             data-testid="save-recipient"
             onClick={save} disabled={!valid || saving}
             className="rounded-lg px-4 py-2 text-sm font-medium text-white inline-flex items-center gap-2 disabled:opacity-60"
-            style={{ backgroundColor: "var(--splash-navy)" }}
+            style={{ backgroundColor: "var(--sidebar)" }}
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {isNew ? "Add recipient" : "Save changes"}
@@ -225,7 +225,7 @@ function RecipientEditModal({ open, recipient, onClose, onSaved }) {
   );
 }
 
-const inputCls = "w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#22A7F0]/30";
+const inputCls = "w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#4338CA]/30";
 function Field({ label, children }) {
   return (
     <label className="block">

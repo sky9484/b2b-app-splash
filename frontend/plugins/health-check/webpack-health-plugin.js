@@ -38,7 +38,7 @@ class WebpackHealthPlugin {
       });
 
       this.status.totalCompiles++;
-      this.status.compileDuration = Date.now() - this.status.lastCompileTime;
+      this.status.compileDuration = Date.now() - this.status.lastCompileTime; 
 
       if (stats.hasErrors()) {
         this.status.state = 'failed';

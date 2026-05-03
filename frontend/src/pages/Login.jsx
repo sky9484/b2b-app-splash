@@ -72,9 +72,9 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2" style={{ backgroundColor: "var(--splash-bg)" }}>
+    <div className="min-h-screen grid md:grid-cols-2" style={{ backgroundColor: "var(--page)" }}>
       {/* Left brand panel */}
-      <div className="hidden md:flex flex-col justify-between p-12 text-white relative overflow-hidden" style={{ backgroundColor: "var(--splash-navy)" }}>
+      <div className="hidden md:flex flex-col justify-between p-12 text-white relative overflow-hidden" style={{ backgroundColor: "var(--sidebar)" }}>
         {/* Logo */}
         <div className="flex items-center gap-3 relative z-10">
           <img src="/splash-logo.svg" alt="Splash" className="h-12 w-12 rounded-xl object-contain" />
@@ -87,7 +87,7 @@ export default function Login() {
         <div className="relative z-10 max-w-md">
           <h1 className="text-4xl font-semibold tracking-tight leading-tight mb-4">
             Pay vendors in the Philippines.<br/>
-            <span style={{ color: "var(--splash-cyan)" }}>Settled in 5 minutes.</span>
+            <span style={{ color: "var(--indigo)" }}>Settled in 5 minutes.</span>
           </h1>
           <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
             Splash lets Malaysian SMEs send PHP payouts straight from FPX. One flat 1.5% fee, real-time tracking, no crypto required.
@@ -99,7 +99,7 @@ export default function Login() {
               { v: "10+", l: "PH banks" },
             ].map((s) => (
               <div key={s.l} className="rounded-lg p-4" style={{ backgroundColor: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                <div className="text-2xl font-semibold tabular-nums" style={{ color: "var(--splash-green)" }}>{s.v}</div>
+                <div className="text-2xl font-semibold tabular-nums" style={{ color: "var(--success)" }}>{s.v}</div>
                 <div className="text-xs uppercase tracking-wider mt-1" style={{ color: "rgba(255,255,255,0.55)" }}>{s.l}</div>
               </div>
             ))}
@@ -125,7 +125,7 @@ export default function Login() {
           <h2 className="text-2xl font-semibold tracking-tight mb-1">
             {mode === "login" ? "Sign in to your dashboard" : "Create your Splash account"}
           </h2>
-          <p className="text-sm mb-6" style={{ color: "var(--splash-muted)" }}>
+          <p className="text-sm mb-6" style={{ color: "var(--ink-3)" }}>
             {mode === "login" ? "Enter your credentials to continue." : "Fill in your details to get started."}
           </p>
 
@@ -136,7 +136,7 @@ export default function Login() {
             disabled={zkLoading || !ZK_CONFIGURED}
             title={!ZK_CONFIGURED ? "Add REACT_APP_GOOGLE_CLIENT_ID to frontend/.env to enable" : ""}
             className="w-full flex items-center justify-center gap-3 rounded-lg border px-4 py-2.5 text-sm font-medium transition hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed mb-4"
-            style={{ borderColor: "var(--splash-border)", color: "var(--splash-text)" }}
+            style={{ borderColor: "var(--outline)", color: "var(--ink)" }}
           >
             {zkLoading ? (
               <Loader2 size={16} className="animate-spin" />
@@ -153,9 +153,9 @@ export default function Login() {
           </button>
 
           <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
-            <span className="text-xs" style={{ color: "var(--splash-muted)" }}>or continue with email</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: "var(--splash-border)" }} />
+            <div className="flex-1 h-px" style={{ backgroundColor: "var(--outline)" }} />
+            <span className="text-xs" style={{ color: "var(--ink-3)" }}>or continue with email</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: "var(--outline)" }} />
           </div>
 
           <form onSubmit={submit} className="space-y-4" data-testid="auth-form">
@@ -187,19 +187,19 @@ export default function Login() {
               disabled={submitting}
               data-testid="auth-submit"
               className="w-full rounded-lg px-5 py-3 font-medium text-white flex items-center justify-center gap-2 transition disabled:opacity-60"
-              style={{ backgroundColor: "var(--splash-navy)" }}
+              style={{ backgroundColor: "var(--indigo)" }}
             >
               {submitting ? <Loader2 size={16} className="animate-spin" /> : (mode === "login" ? "Sign in" : "Create account")}
               {!submitting && <ArrowRight size={16} />}
             </button>
 
-            <div className="text-sm text-center pt-1" style={{ color: "var(--splash-muted)" }}>
+            <div className="text-sm text-center pt-1" style={{ color: "var(--ink-3)" }}>
               {mode === "login" ? "New to Splash?" : "Already have an account?"}{" "}
               <button
                 type="button"
                 onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
                 className="font-medium hover:underline"
-                style={{ color: "var(--splash-cyan)" }}
+                style={{ color: "var(--indigo)" }}
                 data-testid="toggle-auth-mode"
               >
                 {mode === "login" ? "Create one" : "Sign in"}
@@ -208,14 +208,14 @@ export default function Login() {
           </form>
 
           {/* Demo credentials hint */}
-          <div className="mt-6 p-3 rounded-lg text-xs" style={{ backgroundColor: "#EBF5FB", color: "#1F4E79" }}>
+          <div className="mt-6 p-3 rounded-lg text-xs" style={{ backgroundColor: "var(--indigo-light)", color: "var(--indigo)" }}>
             <div className="font-medium mb-0.5">Demo credentials</div>
             <div className="tabular-nums opacity-80">admin@splash.com / Splash@2026</div>
           </div>
 
           {/* zkLogin setup note — only shown when not configured */}
           {!ZK_CONFIGURED && (
-            <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: "#F0F9FF", color: "#0369A1", border: "1px solid #BAE6FD" }}>
+            <div className="mt-3 p-3 rounded-lg text-xs" style={{ backgroundColor: "var(--processing-bg)", color: "var(--processing)", border: "1px solid var(--processing-border)" }}>
               <div className="font-semibold mb-1">Enable Google sign-in (zkLogin)</div>
               <ol className="list-decimal list-inside space-y-1 opacity-80">
                 <li>Create an OAuth 2.0 Client ID at <a href="https://console.cloud.google.com" target="_blank" rel="noreferrer" className="underline">Google Cloud Console</a></li>
@@ -236,7 +236,7 @@ const inputCls = "w-full rounded-lg border bg-white px-3 py-2.5 text-sm outline-
 function Field({ label, children }) {
   return (
     <label className="block">
-      <div className="text-xs font-medium mb-1.5" style={{ color: "var(--splash-text)" }}>{label}</div>
+      <div className="text-xs font-medium mb-1.5" style={{ color: "var(--ink)" }}>{label}</div>
       {children}
     </label>
   );

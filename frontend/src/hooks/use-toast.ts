@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 // Inspired by react-hot-toast library
 import * as React from "react"
@@ -19,9 +20,9 @@ function genId() {
   return count.toString();
 }
 
-const toastTimeouts = new Map()
+const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
-const addToRemoveQueue = (toastId) => {
+const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
     return
   }

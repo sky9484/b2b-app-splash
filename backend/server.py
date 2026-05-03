@@ -140,8 +140,9 @@ def fetch_fx_rate() -> float:
 
 SUI_EXPLORER_BASE_MOCK = "https://suiscan.xyz/testnet/tx"  # testnet explorer for all transfers
 
-# Local services (Curlec real flow + Sui Move contract)
+# Local services (Curlec real flow + Sui Move contract + Hata exchange)
 from services import curlec_service, sui_service  # noqa: E402
+from services.hata_service import convert_myr_to_usdc, convert_myr_to_usdc_mock  # noqa: E402
 
 def gen_sui_tx_hash() -> str:
     """Generate a mock Sui transaction digest in base58 format (44 chars).
@@ -198,6 +199,7 @@ def calc_quote(amount_myr: float):
     total_fee = round(fx_spread + platform_fee + fixed_fee, 2)
     net_myr = max(amount_myr - total_fee, 0)
     receive_php = round(net_myr * rate, 2)
+    total_debit_myr = round(amount_myr + total_fee, 2)
     return {
         "send_amount_myr": round(amount_myr, 2),
         "receive_amount_php": receive_php,
@@ -206,7 +208,7 @@ def calc_quote(amount_myr: float):
         "platform_fee": platform_fee,
         "fixed_fee": fixed_fee,
         "total_fee": total_fee,
-        "total_debit_myr": round(amount_myr, 2),
+        "total_debit_myr": total_debit_myr,
         "quote_expires_at": (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat(),
     }
 
@@ -257,9 +259,38 @@ async def fx_rate():
 
 @api.post("/quote")
 async def quote(body: QuoteIn, user=Depends(get_current_user)):
-    if body.send_amount_myr < 100 or body.send_amount_myr > 100000:
-        raise HTTPException(status_code=400, detail="Amount must be between RM 100 and RM 100,000")
+    if body.send_amount_myr < 100 or body.send_amount_myr > 150000:
+        raise HTTPException(status_code=400, detail="Amount must be between RM 100 and RM 150,000")
     return calc_quote(body.send_amount_myr)
+
+@api.get("/fx-quote")
+async def fx_quote_endpoint(amount_myr: float = Query(..., gt=0)):
+    """Live FX quote for QuickSendPanel. Uses Hata Labuan when configured, mock otherwise."""
+    if not os.getenv("HATA_SC_API_KEY"):
+        rate = 4.70
+        return {
+            "rate": str(rate),
+            "usdtAmount": f"{amount_myr / rate:.6f}",
+            "feeUsdt": "0",
+        }
+    from services.hata_service import get_fx_quote as _get_fx_quote
+    try:
+        result = await _get_fx_quote(amount_myr)
+        # Normalise keys to camelCase for the frontend FxQuote type
+        return {
+            "rate": result["rate"],
+            "usdtAmount": result["usdt_amount"],
+            "feeUsdt": result["fee_usdt"],
+            "expiresAt": result.get("expires_at"),
+        }
+    except Exception as e:
+        logger.warning(f"Hata fx-quote failed, using fallback: {e}")
+        rate = 4.70
+        return {
+            "rate": str(rate),
+            "usdtAmount": f"{amount_myr / rate:.6f}",
+            "feeUsdt": "0",
+        }
 
 # ---------- Recipients ----------
 @api.get("/recipients")
@@ -377,11 +408,39 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
     q = calc_quote(body.send_amount_myr)
     tid = str(uuid.uuid4())
     now = datetime.now(timezone.utc)
+
+    # ── Hata exchange: MYR → USDC (primary) ────────────────────────────────────
+    use_mock = not os.getenv("HATA_SC_API_KEY")
+    hata_result = await (convert_myr_to_usdc_mock if use_mock else convert_myr_to_usdc)(body.send_amount_myr)
+
+    if not hata_result["success"]:
+        # Create a failed transfer record so the UI can show exchange_failed status
+        failed_doc = {
+            "id": tid, "user_id": user["id"], "recipient_id": rec["id"],
+            "recipient_name": rec["name"], "recipient_bank": rec["bank"],
+            "recipient_account": rec["account_number"],
+            "send_amount_myr": q["send_amount_myr"], "receive_amount_php": q["receive_amount_php"],
+            "rate": q["rate"], "total_fee_myr": q["total_fee"],
+            "reference": body.reference or gen_reference(),
+            "note": body.note or "",
+            "status": "exchange_failed",
+            "error_message": hata_result["error"],
+            "created_at": now.isoformat(),
+            "stages": [],
+        }
+        await db.transfers.insert_one(failed_doc)
+        failed_doc.pop("_id", None)
+        raise HTTPException(status_code=502, detail={
+            "code": "HATA_CONVERSION_FAILED",
+            "message": hata_result["error"],
+            "transfer_id": tid,
+        })
+
+    # ── Build transfer doc ─────────────────────────────────────────────────
     sui_hash = gen_sui_tx_hash()
-    sui_explorer = f"{SUI_EXPLORER_BASE_MOCK}/{sui_hash}"  # default mock; replaced below if real
-    if sui_service.is_configured():
-        # Mark explorer base to testnet up front so UI link is correct even before record
-        sui_explorer = sui_service.explorer_url(sui_hash)
+    # Explorer URL uses the tx digest — not the package ID
+    sui_explorer = sui_service.explorer_url(sui_hash)
+
     doc = {
         "id": tid, "user_id": user["id"], "recipient_id": rec["id"],
         "recipient_name": rec["name"], "recipient_bank": rec["bank"],
@@ -397,15 +456,20 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
         "created_at": now.isoformat(),
         "sui_tx_hash": sui_hash,
         "sui_explorer_url": sui_explorer,
+        "sui_vision_url": sui_service.vision_url(sui_hash),
         "sui_real": False,
         "curlec_order_id": None,
         "curlec_payment_id": None,
+        "usdc_amount": hata_result["usdc_amount"],
+        "exchange_rate": hata_result["exchange_rate"],
+        "hata_order_id": hata_result["hata_order_id"],
+        "hata_tier": hata_result["tier"],
         "stages": [
-            {"key": "fpx", "label": "FPX payment received", "desc": "Your bank transfer completed successfully", "done": True, "ts": now.isoformat()},
-            {"key": "luno", "label": "MYR converted to USDC on Luno", "desc": f"{q['send_amount_myr']:.2f} MYR → {round(q['send_amount_myr']/19.4, 2)} USDC", "done": True, "ts": (now + timedelta(seconds=20)).isoformat()},
-            {"key": "sui", "label": "USDC settled on Sui blockchain", "desc": f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]}", "done": True, "ts": (now + timedelta(seconds=40)).isoformat()},
-            {"key": "coins", "label": "USDC converted to PHP on Coins.ph", "desc": f"Processing → {q['receive_amount_php']:.2f} PHP", "done": False, "ts": None},
-            {"key": "bank", "label": f"Sent to recipient's {rec['bank']} account", "desc": "Awaiting bank confirmation", "done": False, "ts": None},
+            {"key": "fpx",  "label": "FPX payment received",          "desc": "Your bank transfer completed successfully",                                                    "done": True,  "ts": now.isoformat()},
+            {"key": "hata", "label": "MYR converted to USDC via Hata", "desc": f"{q['send_amount_myr']:.2f} MYR → {hata_result['usdc_amount']} USDC ({hata_result['tier']})", "done": True,  "ts": (now + timedelta(seconds=20)).isoformat()},
+            {"key": "sui",  "label": "USDC settled on Sui blockchain",  "desc": f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]}",                                           "done": True,  "ts": (now + timedelta(seconds=40)).isoformat()},
+            {"key": "coins","label": "USDT converted to PHP on Coins.ph","desc": f"Processing → {q['receive_amount_php']:.2f} PHP",                                            "done": False, "ts": None},
+            {"key": "bank", "label": f"Sent to recipient's {rec['bank']} account", "desc": "Awaiting bank confirmation",                                                       "done": False, "ts": None},
         ],
     }
     await db.transfers.insert_one(doc)
@@ -451,6 +515,7 @@ async def advance_transfer(tid: str, user=Depends(get_current_user)):
             if digest:
                 update["sui_tx_hash"] = digest
                 update["sui_explorer_url"] = sui_service.explorer_url(digest)
+                update["sui_vision_url"] = sui_service.vision_url(digest)
                 update["sui_real"] = True
                 # Update the stage description with the real digest
                 for s in stages:
@@ -459,7 +524,6 @@ async def advance_transfer(tid: str, user=Depends(get_current_user)):
                 update["stages"] = stages
         except Exception as e:
             logger.warning(f"sui record_settlement raised: {e}")
-
     await db.transfers.update_one({"id": tid}, {"$set": update})
     t.update(update)
     # Notify on completion

@@ -68,12 +68,12 @@ export default function Batch() {
     <div className="max-w-4xl mx-auto space-y-6" data-testid="batch-page">
       <div>
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Batch payouts</h1>
-        <p className="text-sm mt-1" style={{ color: "var(--splash-muted)" }}>Pay up to 30 recipients with a single FPX transaction.</p>
+        <p className="text-sm mt-1" style={{ color: "var(--ink-3)" }}>Pay up to 30 recipients with a single FPX transaction.</p>
       </div>
 
-      <div className="rounded-xl p-4 flex gap-3 items-start" style={{ backgroundColor: "#EBF5FB", border: "1px solid #BEE3F8" }}>
-        <Package size={18} style={{ color: "#1F4E79" }} className="flex-shrink-0 mt-0.5" />
-        <div className="text-sm leading-relaxed" style={{ color: "#1F4E79" }}>
+      <div className="rounded-xl p-4 flex gap-3 items-start" style={{ backgroundColor: "var(--processing-bg)", border: "1px solid var(--processing-border)" }}>
+        <Package size={18} style={{ color: "var(--processing)" }} className="flex-shrink-0 mt-0.5" />
+        <div className="text-sm leading-relaxed" style={{ color: "var(--processing)" }}>
           Upload a CSV with up to <span className="font-semibold">30 recipients</span>. We'll process them all at once with one FPX payment.
         </div>
       </div>
@@ -83,23 +83,23 @@ export default function Batch() {
         data-testid="dropzone"
         className="rounded-xl border-2 border-dashed flex flex-col items-center justify-center py-16 px-6 transition cursor-pointer text-center"
         style={{
-          borderColor: isDragActive ? "var(--splash-cyan)" : "#CBD5E0",
-          backgroundColor: isDragActive ? "rgba(34,167,240,0.05)" : "white",
+          borderColor: isDragActive ? "var(--indigo)" : "#CBD5E0",
+          backgroundColor: isDragActive ? "rgba(67,56,202,0.05)" : "white",
         }}
       >
         <input {...getInputProps()} />
-        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(34,167,240,0.12)" }}>
-          <Upload size={22} style={{ color: "var(--splash-cyan)" }} />
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3" style={{ backgroundColor: "rgba(67,56,202,0.12)" }}>
+          <Upload size={22} style={{ color: "var(--indigo)" }} />
         </div>
         <div className="text-base font-semibold">{isDragActive ? "Drop your CSV here" : "Drag CSV here or click to browse"}</div>
-        <div className="text-xs mt-1" style={{ color: "var(--splash-muted)" }}>Max 30 rows · UTF-8 encoded</div>
-        <button onClick={(e) => { e.stopPropagation(); downloadTemplate(); }} data-testid="download-template" className="mt-3 inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--splash-cyan)" }}>
+        <div className="text-xs mt-1" style={{ color: "var(--ink-3)" }}>Max 30 rows · UTF-8 encoded</div>
+        <button onClick={(e) => { e.stopPropagation(); downloadTemplate(); }} data-testid="download-template" className="mt-3 inline-flex items-center gap-1 text-sm font-medium" style={{ color: "var(--indigo)" }}>
           <Download size={14} /> Download template
         </button>
       </div>
 
-      <div className="rounded-xl border bg-white p-4" style={{ borderColor: "var(--splash-border)" }}>
-        <div className="text-xs uppercase tracking-wider font-medium mb-2" style={{ color: "var(--splash-muted)" }}>CSV format</div>
+      <div className="rounded-xl border bg-white p-4" style={{ borderColor: "var(--outline)" }}>
+        <div className="text-xs uppercase tracking-wider font-medium mb-2" style={{ color: "var(--ink-3)" }}>CSV format</div>
         <pre className="mono text-xs overflow-x-auto p-3 rounded-md" style={{ backgroundColor: "#0A1E3F", color: "#E2E8F0" }}>
 {`name,bank,account_number,amount_myr,reference
 Juan Dela Cruz,BDO Unibank,0045 2219 8847,1500.00,INV-001
@@ -108,45 +108,45 @@ Maria Santos,BPI,0078 1122 3344,2300.50,INV-002`}
       </div>
 
       {preview && (
-        <div className="bg-white rounded-xl border overflow-hidden animate-fade-up" style={{ borderColor: "var(--splash-border)" }} data-testid="batch-preview">
-          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "var(--splash-border)" }}>
+        <div className="bg-white rounded-xl border overflow-hidden animate-fade-up" style={{ borderColor: "var(--outline)" }} data-testid="batch-preview">
+          <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "var(--outline)" }}>
             <div className="flex items-center gap-2">
               <FileText size={16} className="text-slate-400" />
               <span className="text-sm font-medium">{filename}</span>
-              <span className="text-xs px-2 py-0.5 rounded-full tabular-nums" style={{ backgroundColor: "rgba(0,210,160,0.12)", color: "#00B689" }}>
+              <span className="text-xs px-2 py-0.5 rounded-full tabular-nums" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}>
                 {preview.valid_count}/{preview.count} valid
               </span>
             </div>
-            <button onClick={() => { setPreview(null); setFilename(""); }} className="text-xs font-medium" style={{ color: "var(--splash-muted)" }}>Clear</button>
+            <button onClick={() => { setPreview(null); setFilename(""); }} className="text-xs font-medium" style={{ color: "var(--ink-3)" }}>Clear</button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead style={{ backgroundColor: "var(--splash-bg)" }}>
+              <thead style={{ backgroundColor: "var(--raised)" }}>
                 <tr>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Recipient</th>
-                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Bank</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Amount</th>
-                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Receives</th>
-                  <th className="px-4 py-2.5 text-center text-xs font-medium uppercase tracking-wider" style={{ color: "var(--splash-muted)" }}>Status</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Recipient</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Bank</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Amount</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Receives</th>
+                  <th className="px-4 py-2.5 text-center text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {preview.rows.map((r, i) => (
-                  <tr key={i} className="border-t" style={{ borderColor: "var(--splash-border)" }}>
+                  <tr key={i} className="border-t" style={{ borderColor: "var(--outline)" }}>
                     <td className="px-4 py-2.5">{r.name}</td>
-                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--splash-muted)" }}>{r.bank}</td>
+                    <td className="px-4 py-2.5 text-xs" style={{ color: "var(--ink-3)" }}>{r.bank}</td>
                     <td className="px-4 py-2.5 text-right tabular-nums">{formatMYR(r.amount_myr)}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: r.valid ? "var(--splash-green)" : "var(--splash-muted)" }}>
+                    <td className="px-4 py-2.5 text-right tabular-nums" style={{ color: r.valid ? "var(--success)" : "var(--ink-3)" }}>
                       {r.valid ? formatPHP(r.receive_php) : "—"}
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       {r.valid ? (
-                        <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--splash-green)" }}>
+                        <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--success)" }}>
                           <CheckCircle2 size={12} /> Valid
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-xs" style={{ color: "#C53030" }}>
+                        <span className="inline-flex items-center gap-1 text-xs" style={{ color: "var(--danger)" }}>
                           <AlertTriangle size={12} /> Invalid
                         </span>
                       )}
@@ -157,11 +157,11 @@ Maria Santos,BPI,0078 1122 3344,2300.50,INV-002`}
             </table>
           </div>
 
-          <div className="px-5 py-4 border-t flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--splash-border)", backgroundColor: "var(--splash-bg)" }}>
+          <div className="px-5 py-4 border-t flex flex-wrap items-center justify-between gap-3" style={{ borderColor: "var(--outline)", backgroundColor: "var(--raised)" }}>
             <div className="text-sm">
-              <span style={{ color: "var(--splash-muted)" }}>Total debit: </span>
+              <span style={{ color: "var(--ink-3)" }}>Total debit: </span>
               <span className="font-semibold tabular-nums">{formatMYR(preview.total_send_myr + preview.total_fee_myr)}</span>
-              <span className="ml-3 text-xs tabular-nums" style={{ color: "var(--splash-muted)" }}>
+              <span className="ml-3 text-xs tabular-nums" style={{ color: "var(--ink-3)" }}>
                 (incl. {formatMYR(preview.total_fee_myr)} fees · 1 MYR = {preview.rate} PHP)
               </span>
             </div>
@@ -170,7 +170,7 @@ Maria Santos,BPI,0078 1122 3344,2300.50,INV-002`}
               onClick={submitBatch}
               disabled={submitting || preview.valid_count === 0}
               className="rounded-lg px-5 py-2.5 font-medium text-white transition hover:opacity-95 disabled:opacity-50"
-              style={{ backgroundColor: "var(--splash-green)" }}
+              style={{ backgroundColor: "var(--success)" }}
             >
               {submitting ? "Submitting..." : `Submit ${preview.valid_count} payouts via FPX`}
             </button>
