@@ -1,69 +1,62 @@
-import "./App.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/lib/auth";
-import { Toaster } from "@/components/ui/sonner";
-import Layout from "@/components/Layout";
-import Landing from "@/pages/Landing.jsx";
-import Login from "@/pages/Login.jsx";
-import Dashboard from "@/pages/Dashboard.jsx";
-import SendPayout from "@/pages/SendPayout.jsx";
-import Transfers from "@/pages/Transfers.jsx";
-import Recipients from "@/pages/Recipients.jsx";
-import Batch from "@/pages/Batch.jsx";
-import { ReactNode } from "react";
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
 
-function ProtectedRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-ink" data-testid="auth-loading">
-        <div className="spinner-ring" />
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
-  return <Layout>{children}</Layout>;
-}
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './lib/auth';
+import Layout from './components/Layout';
+import Landing from './pages/Landing';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import SendPayout from './pages/SendPayout';
+import Transfers from './pages/Transfers';
+import Recipients from './pages/Recipients';
+import BatchPayouts from './pages/BatchPayouts';
+import Settings from './pages/Settings';
+import { Toaster } from './components/ui/sonner';
 
-function LandingRoute() {
-  const { user, loading } = useAuth();
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-ink">
-      <div className="spinner-ring" />
-    </div>
-  );
-  if (user) return <Navigate to="/dashboard" replace />;
-  return <Landing />;
-}
-
-function PublicOnly({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
-  if (loading) return null;
-  if (user) return <Navigate to="/dashboard" replace />;
-  return <>{children}</>;
-}
-
-function App() {
+/** Wrap all authenticated app routes inside the sidebar layout */
+function AppRoutes() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
   return (
-    <div className="App">
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingRoute />} />
-            <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/send" element={<ProtectedRoute><SendPayout /></ProtectedRoute>} />
-            <Route path="/transfers" element={<ProtectedRoute><Transfers /></ProtectedRoute>} />
-            <Route path="/recipients" element={<ProtectedRoute><Recipients /></ProtectedRoute>} />
-            <Route path="/batch" element={<ProtectedRoute><Batch /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster richColors position="top-right" />
-      </AuthProvider>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/send" element={<SendPayout />} />
+        <Route path="/transfers" element={<Transfers />} />
+        <Route path="/recipients" element={<Recipients />} />
+        <Route path="/batch" element={<BatchPayouts />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
   );
 }
 
-export default App;
+/** Login page — redirect to dashboard if already logged in */
+function LoginRoute() {
+  const { user } = useAuth();
+  if (user) return <Navigate to="/dashboard" replace />;
+  return <Login />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public landing page */}
+          <Route path="/" element={<Landing />} />
+          {/* Auth */}
+          <Route path="/login" element={<LoginRoute />} />
+          {/* Protected app — everything under /dashboard, /send, etc. */}
+          <Route path="/*" element={<AppRoutes />} />
+        </Routes>
+        <Toaster position="top-right" richColors />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}

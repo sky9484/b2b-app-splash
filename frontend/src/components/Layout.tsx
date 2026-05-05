@@ -1,280 +1,195 @@
-import { useState, ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "@/lib/auth";
-import { LayoutDashboard, Send, ArrowLeftRight, Users, FileSpreadsheet, LogOut, Bell, Code2, Settings, LucideIcon } from "lucide-react";
-import { initials, avatarColor } from "@/lib/api";
+import React, { useState } from 'react';
+import { NavLink, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
+import { 
+  LayoutDashboard, 
+  Send as SendIcon, 
+  History, 
+  Users, 
+  FileStack, 
+  Settings, 
+  LogOut,
+  Bell,
+  Search,
+  ChevronRight,
+  Menu,
+  X,
+  CheckCircle2,
+  AlertTriangle
+} from 'lucide-react';
+import { cn } from '../lib/utils';
 
-interface NavItem {
+// ... (SidebarItem stays same)
+interface SidebarItemProps {
   to: string;
+  icon: React.ElementType;
   label: string;
-  icon: LucideIcon;
-  end?: boolean;
-  badge?: number | null;
+  onClick?: () => void;
 }
 
-const NAV_MAIN: NavItem[] = [
-  { to: "/dashboard",  label: "Dashboard",  icon: LayoutDashboard, end: true },
-  { to: "/send",       label: "Send",        icon: Send },
-  { to: "/batch",      label: "Batch",       icon: FileSpreadsheet },
-  { to: "/transfers",  label: "History",     icon: ArrowLeftRight },
-  { to: "/recipients", label: "Recipients",  icon: Users },
-];
+function SidebarItem({ to, icon: Icon, label, onClick }: SidebarItemProps) {
+  return (
+    <NavLink
+      to={to}
+      onClick={onClick}
+      className={({ isActive }) => cn(
+        "flex items-center gap-3 px-4 py-3 rounded-lg transition-all font-medium",
+        isActive 
+          ? "bg-accent-cyan text-white shadow-md shadow-accent-cyan/20" 
+          : "text-white/60 hover:text-white hover:bg-white/5"
+      )}
+    >
+      <Icon size={20} />
+      <span>{label}</span>
+    </NavLink>
+  );
+}
 
-const NAV_DEV: NavItem[] = [
-  { to: "/transfers", label: "API & webhooks", icon: Code2 },
-  { to: "/dashboard", label: "Settings",       icon: Settings },
-];
-
-const SUI_PACKAGE_ID = process.env.REACT_APP_SUI_PACKAGE_ID ?? "0xbfd9b35318e8588d45c9f1ce161da10462c61b40377e7f8c890196f5cba4ca51";
-const SUI_EXPLORER_URL = `https://suiscan.xyz/testnet/object/${SUI_PACKAGE_ID}`;
-
-// Page title map for breadcrumb
-const PAGE_TITLES: Record<string, string> = {
-  "/dashboard":  "Dashboard",
-  "/send":       "Send",
-  "/batch":      "Batch",
-  "/transfers":  "History",
-  "/recipients": "Recipients",
-};
-
-export default function Layout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
+export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [kycStatus, setKycStatus] = useState<'verified' | 'pending'>('verified');
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+  const handleLogout = () => {
+    logout();
+    navigate('/', { replace: true });
   };
 
-  const userName    = typeof user === "object" && user ? (user as any).name    : "";
-  const userEmail   = typeof user === "object" && user ? (user as any).email   : "";
-  const userCompany = typeof user === "object" && user ? (user as any).company : "";
+  // Derive initials from user name or company
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : user?.company
+    ? user.company.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    : 'AS';
+  const displayName = user?.company || user?.name || 'Acme Sdn Bhd';
+  const displayEmail = user?.email || 'admin@acme.com';
+  
+  const getBreadcrumb = () => {
+    const path = location.pathname;
+    if (path === '/') return 'Dashboard';
+    if (path === '/send') return 'Send Payout';
+    if (path === '/transfers') return 'Transfers';
+    if (path === '/recipients') return 'Recipients';
+    if (path === '/batch') return 'Batch Payouts';
+    if (path === '/settings') return 'Settings';
+    return 'Dashboard';
+  };
 
-  const currentPage = PAGE_TITLES[location.pathname] || "Dashboard";
+  const toggleMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--page)', width: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}>
-
-      {/* Mobile overlay */}
-      {mobileOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 30 }}
-          onClick={() => setMobileOpen(false)}
+    <div className="flex h-screen bg-bg-light overflow-hidden">
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-primary-navy/80 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* ── Sidebar ── */}
-      <aside
-        style={{
-          width: '200px',
-          background: 'var(--sidebar)',
-          display: 'flex',
-          flexDirection: 'column',
-          flexShrink: 0,
-          position: 'fixed',
-          left: 0, top: 0,
-          height: '100vh',
-          zIndex: 40,
-          transform: mobileOpen ? 'translateX(0)' : 'translateX(-100%)',
-          transition: 'transform 300ms ease',
-        }}
-        className="md:relative md:translate-x-0"
-        data-testid="app-sidebar"
-      >
-        {/* Logo */}
-        <div style={{
-          padding: '18px 16px 14px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-          display: 'flex', alignItems: 'center', gap: '10px',
-        }}>
-          <img src="/splash-logo.svg" alt="Splash" style={{ width: '30px', height: '30px', borderRadius: '7px', flexShrink: 0 }} />
-          <div>
-            <div style={{ color: '#FFFFFF', fontSize: '14px', fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.01em' }}>Splash</div>
-            <div style={{ color: 'rgba(199,196,240,0.7)', fontSize: '10px', marginTop: '1px' }}>B2B PAYOUTS · MY → PH</div>
-          </div>
+      {/* Sidebar */}
+      <aside className={cn(
+        "bg-primary-navy text-white flex flex-col fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:translate-x-0 lg:h-screen shrink-0",
+        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="p-8 flex items-center justify-between">
+          <Link to="/" onClick={() => setMobileMenuOpen(false)} className="text-2xl font-bold tracking-tight flex items-center gap-2 uppercase text-white">
+            <div className="w-8 h-8 bg-cyan-500 rounded-lg flex items-center justify-center">
+              <div className="w-4 h-4 bg-white rounded-full translate-x-1" />
+            </div>
+            <span>SPLASH</span>
+          </Link>
+          <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden text-white/60 hover:text-white">
+            <X size={24} />
+          </button>
         </div>
 
-        {/* Main nav */}
-        <nav style={{ padding: '10px 8px', flex: 1 }}>
-          {NAV_MAIN.map((item) => {
-            const Icon = item.icon;
-            const active = item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  height: '36px', padding: '0 10px', borderRadius: '7px', marginBottom: '1px',
-                  textDecoration: 'none', fontSize: '13px', fontWeight: active ? 500 : 400,
-                  color: active ? '#FFFFFF' : 'rgba(199,196,240,0.8)',
-                  background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  transition: 'all 100ms ease',
-                }}
-                onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; } }}
-                onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(199,196,240,0.8)'; } }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                  <Icon size={14} strokeWidth={2} />
-                  {item.label}
-                </span>
-                {item.badge != null && (
-                  <span style={{ fontSize: '10px', fontWeight: 600, background: 'rgba(255,255,255,0.15)', color: '#fff', borderRadius: '10px', padding: '1px 6px' }}>
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-
-          {/* Developer section */}
-          <div style={{ marginTop: '20px', marginBottom: '6px', padding: '0 10px', fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', color: 'rgba(199,196,240,0.4)', textTransform: 'uppercase' }}>
-            Developer
-          </div>
-          {NAV_DEV.map((item) => {
-            const Icon = item.icon;
-            const active = location.pathname.startsWith(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '9px',
-                  height: '36px', padding: '0 10px', borderRadius: '7px', marginBottom: '1px',
-                  textDecoration: 'none', fontSize: '13px', fontWeight: active ? 500 : 400,
-                  color: active ? '#FFFFFF' : 'rgba(199,196,240,0.8)',
-                  background: active ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  transition: 'all 100ms ease',
-                }}
-                onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#FFFFFF'; } }}
-                onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(199,196,240,0.8)'; } }}
-              >
-                <Icon size={14} strokeWidth={2} />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
+          <div className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-4 mb-2 mt-4">Main Menu</div>
+          <SidebarItem to="/" icon={LayoutDashboard} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
+          <SidebarItem to="/send" icon={SendIcon} label="Send Payout" onClick={() => setMobileMenuOpen(false)} />
+          <SidebarItem to="/transfers" icon={History} label="Transfers" onClick={() => setMobileMenuOpen(false)} />
+          <SidebarItem to="/recipients" icon={Users} label="Recipients" onClick={() => setMobileMenuOpen(false)} />
+          <SidebarItem to="/batch" icon={FileStack} label="Batch Payouts" onClick={() => setMobileMenuOpen(false)} />
+          
+          <div className="text-[10px] uppercase tracking-widest text-white/30 font-bold px-4 mb-2 mt-8">Account</div>
+          <SidebarItem to="/settings" icon={Settings} label="Settings" onClick={() => setMobileMenuOpen(false)} />
         </nav>
 
-        {/* Bottom — user */}
-        <div style={{ padding: '10px 8px 14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px', padding: '8px 10px', borderRadius: '8px' }}>
-            <div style={{
-              width: '30px', height: '30px', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '11px', fontWeight: 600, color: '#FFFFFF', flexShrink: 0,
-              backgroundColor: avatarColor(userName),
-            }}>
-              {initials(userName)}
+        <div className="p-4 mt-auto border-t border-white/10 space-y-4">
+          <div className="flex items-center gap-3 px-2">
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">{initials}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-white truncate">{displayName}</div>
+              <div className="text-xs text-white/40 truncate">{displayEmail}</div>
             </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div style={{ color: '#FFFFFF', fontSize: '12px', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {userName || "User"}
-              </div>
-              <div style={{ color: 'rgba(199,196,240,0.6)', fontSize: '10px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {userCompany || userEmail}
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              title="Sign out"
-              style={{ padding: '4px', borderRadius: '5px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'rgba(199,196,240,0.6)', flexShrink: 0 }}
-              onMouseEnter={e => { e.currentTarget.style.color = '#FFFFFF'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(199,196,240,0.6)'; }}
-            >
-              <LogOut size={13} />
-            </button>
           </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 w-full px-2 py-2 text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition-all text-sm font-medium"
+          >
+            <LogOut size={16} />
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, width: '100%' }}>
-
-        {/* Topbar */}
-        <header style={{
-          height: '48px',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '0 20px',
-          background: 'var(--surface)',
-          borderBottom: '1px solid var(--outline)',
-          flexShrink: 0,
-        }}>
-          {/* Left: hamburger + breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-            <button
-              className="md:hidden"
-              style={{ padding: '5px', borderRadius: '5px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--ink-3)' }}
-              onClick={() => setMobileOpen(s => !s)}
-              aria-label="Toggle menu"
-              data-testid="mobile-menu-toggle"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 12h18M3 6h18M3 18h18"/>
-              </svg>
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
+        {/* Header */}
+        <header className="h-20 bg-white border-b border-border-base flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
+          <div className="flex items-center gap-4">
+            <button onClick={toggleMenu} className="lg:hidden text-text-muted hover:text-text-dark">
+              <Menu size={24} />
             </button>
-            {/* Breadcrumb */}
-            <nav style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
-              <span style={{ color: 'var(--ink-3)', fontWeight: 500 }}>{currentPage}</span>
-              <span style={{ color: 'var(--ink-4)' }}>/</span>
-              <span style={{ color: 'var(--ink-3)' }}>MY Malaysia</span>
-              <span style={{ color: 'var(--ink-4)' }}>→</span>
-              <span style={{ color: 'var(--ink-3)' }}>PH Philippines</span>
-            </nav>
+            <div className="flex items-center gap-2 text-sm font-medium text-text-muted hidden sm:flex">
+              <Link to="/" className="hover:text-primary-navy transition-colors">Home</Link>
+              <ChevronRight size={16} />
+              <span className="text-text-dark font-semibold">{getBreadcrumb()}</span>
+            </div>
           </div>
 
-          {/* Right: badges + bell + avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Sandbox badge */}
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: '5px',
-              fontSize: '11px', fontWeight: 500, padding: '3px 8px', borderRadius: '20px',
-              backgroundColor: 'var(--success-bg)', color: 'var(--success)',
-              border: '1px solid var(--success-border)',
-            }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--success)', display: 'inline-block' }} />
-              Sandbox
-            </span>
-            {/* BNM Track badge */}
-            <span style={{
-              fontSize: '11px', fontWeight: 500, padding: '3px 8px', borderRadius: '20px',
-              backgroundColor: 'var(--raised)', color: 'var(--ink-3)',
-              border: '1px solid var(--outline)',
-            }}>
-              BNM Track
-            </span>
-            {/* Bell */}
-            <button style={{ padding: '5px', borderRadius: '6px', border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--ink-3)' }}>
-              <Bell size={15} />
+          <div className="flex items-center gap-3 sm:gap-6">
+            <button className="w-8 h-8 flex items-center justify-center text-text-muted hover:text-primary-navy hover:bg-gray-100 rounded-full transition-colors">
+              <Search size={18} />
             </button>
-            {/* Avatar */}
-            <button
-              data-testid="user-menu-button"
-              onClick={handleLogout}
-              title="Sign out"
-              style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '10px', fontWeight: 600, color: 'white', border: 'none', cursor: 'pointer',
-                backgroundColor: avatarColor(userName),
-              }}
+            <div className={cn(
+              "px-3 py-1.5 rounded-full border text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer",
+              kycStatus === 'verified' 
+                ? "bg-green-50 border-green-200 text-green-700 hover:bg-green-100" 
+                : "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+            )}
+            onClick={() => setKycStatus(prev => prev === 'verified' ? 'pending' : 'verified')}
+            title="Click to toggle KYC status (Demo)"
             >
-              {initials(userName)}
+              {kycStatus === 'verified' ? (
+                <CheckCircle2 size={14} className="text-green-600" />
+              ) : (
+                <AlertTriangle size={14} className="text-amber-600" />
+              )}
+              {kycStatus === 'verified' ? 'Verified' : 'Pending KYC'}
+            </div>
+            <button className="text-text-muted hover:text-primary-navy transition-colors relative">
+              <Bell size={20} />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[9px] font-bold text-white border border-white">2</div>
             </button>
+            <div className="h-8 w-px bg-border-base" />
+            <div className="flex items-center gap-3 cursor-pointer group">
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-semibold text-text-dark leading-none group-hover:text-accent-cyan transition-colors">{displayName}</div>
+                <div className="text-[10px] font-bold text-text-muted uppercase tracking-tighter">Business Account</div>
+              </div>
+              <div className="w-10 h-10 bg-primary-navy rounded-full flex items-center justify-center text-white font-bold shadow-sm">
+                {initials}
+              </div>
+            </div>
           </div>
         </header>
 
-        {/* Page content */}
-        <main style={{
-          flex: 1, padding: '20px 24px',
-          overflowY: 'auto', overflowX: 'hidden',
-          width: '100%', maxWidth: '100%',
-        }}>
+        {/* Content */}
+        <main className="p-8 max-w-[1600px] mx-auto w-full">
           {children}
         </main>
       </div>

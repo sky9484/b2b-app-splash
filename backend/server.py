@@ -832,8 +832,7 @@ async def shutdown_event():
     client.close()
 
 # ---------- Mount ----------
-app.include_router(api)
-
+# CORS middleware must be added BEFORE including routers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -848,3 +847,5 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+app.include_router(api)

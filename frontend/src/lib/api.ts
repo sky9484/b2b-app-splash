@@ -1,7 +1,14 @@
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL ?? "";
+// In dev, VITE_BACKEND_URL is empty — Vite proxy routes /api → localhost:8001
+// In production, set VITE_BACKEND_URL to your backend URL
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "";
 export const API = `${BACKEND_URL}/api`;
+
+// Sui contract IDs (from .env, for building explorer links in the UI)
+export const SUI_PACKAGE_ID = import.meta.env.VITE_SUI_PACKAGE_ID ?? "";
+export const SUI_REGISTRY_ID = import.meta.env.VITE_SUI_REGISTRY_ID ?? "";
+export const SUI_EXPLORER_BASE = "https://suiscan.xyz/testnet/tx";
 
 const api = axios.create({
   baseURL: API,
@@ -16,6 +23,22 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Intercept 401s — clear stale token so user gets redirected to login
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("splash_user");
+      localStorage.removeItem("splash_token");
+      // Only redirect if not already on login/landing
+      if (!window.location.pathname.match(/^\/(login)?$/)) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(err);
+  }
+);
+
 export default api;
 
 export function formatApiError(detail: unknown): string {
@@ -26,7 +49,12 @@ export function formatApiError(detail: unknown): string {
       .map((e) => (e && typeof e.msg === "string" ? e.msg : JSON.stringify(e)))
       .join(" ");
   }
-  if (detail && typeof detail === "object" && "msg" in detail && typeof (detail as Record<string, unknown>).msg === "string") {
+  if (
+    detail &&
+    typeof detail === "object" &&
+    "msg" in detail &&
+    typeof (detail as Record<string, unknown>).msg === "string"
+  ) {
     return (detail as { msg: string }).msg;
   }
   return String(detail);

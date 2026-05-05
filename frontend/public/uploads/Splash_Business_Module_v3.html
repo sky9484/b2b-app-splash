@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splash — Business Module v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #0B1120;
+    --navy-2: #111827;
+    --navy-3: #1a2332;
+    --border: #1e2d40;
+    --border-light: #263345;
+    --blue: #2563EB;
+    --blue-dim: #1d4ed8;
+    --cyan: #06B6D4;
+    --cyan-dim: #0891b2;
+    --green: #10b981;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --slate: #94a3b8;
+    --muted: #64748b;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --text-bright: #f8fafc;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--navy);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 220px;
+    min-width: 220px;
+    background: var(--navy-2);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-brand {
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand-logo {
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-bright);
+    letter-spacing: 0.05em;
+  }
+  .brand-tag {
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .sidebar-nav {
+    padding: 12px 0;
+    flex: 1;
+  }
+  .nav-section-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding: 8px 18px 4px;
+    margin-top: 8px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 18px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 400;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+  }
+  .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-link.active { color: var(--cyan); border-left-color: var(--cyan); background: rgba(6,182,212,0.06); }
+  .nav-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--border-light);
+    flex-shrink: 0;
+  }
+  .nav-link.active .nav-dot { background: var(--cyan); }
+  .sidebar-footer {
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .progress-bar-wrap {
+    background: var(--border);
+    border-radius: 4px;
+    height: 4px;
+    margin: 8px 0 6px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  /* ── Main ── */
+  #main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 0 0 80px;
+  }
+  .page-header {
+    background: var(--navy-2);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px 22px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .page-header h1 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-bright);
+  }
+  .header-badges {
+    display: flex;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .badge-blue { background: rgba(37,99,235,0.15); color: #93c5fd; border: 1px solid rgba(37,99,235,0.3); }
+  .badge-cyan { background: rgba(6,182,212,0.12); color: #67e8f9; border: 1px solid rgba(6,182,212,0.25); }
+  .badge-amber { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+  .badge-green { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.25); }
+  .badge-red { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.25); }
+
+  /* ── Sections ── */
+  section {
+    padding: 40px 40px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    letter-spacing: 0.08em;
+    padding: 2px 8px;
+    border: 1px solid rgba(6,182,212,0.3);
+    border-radius: 4px;
+  }
+  .section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-bright);
+  }
+
+  /* ── Stat grid ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-blue::before { background: var(--blue); }
+  .stat-cyan::before { background: var(--cyan); }
+  .stat-green::before { background: var(--green); }
+  .stat-amber::before { background: var(--amber); }
+  .stat-red::before { background: var(--red); }
+  .stat-val {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-bright);
+    font-family: 'DM Mono', monospace;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── Info boxes ── */
+  .info-box {
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .info-blue { background: rgba(37,99,235,0.08); border-left: 3px solid var(--blue); color: #bfdbfe; }
+  .info-amber { background: rgba(245,158,11,0.08); border-left: 3px solid var(--amber); color: #fde68a; }
+  .info-green { background: rgba(16,185,129,0.08); border-left: 3px solid var(--green); color: #a7f3d0; }
+  .info-cyan { background: rgba(6,182,212,0.08); border-left: 3px solid var(--cyan); color: #a5f3fc; }
+
+  /* ── Two column ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .col-card {
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .col-card-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--cyan);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .col-card ul { list-style: none; }
+  .col-card ul li {
+    padding: 5px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    padding-left: 14px;
+    position: relative;
+  }
+  .col-card ul li:last-child { border-bottom: none; }
+  .col-card ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+  }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    color: var(--text-dim);
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-table td {
+    padding: 11px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-dim);
+  }
+  .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .data-table tr:last-child td { border-bottom: none; }
+  .td-accent { color: var(--text-bright); font-weight: 500; }
+  .td-cyan { color: var(--cyan); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .td-green { color: var(--green); font-family: 'DM Mono', monospace; font-size: 12px; }
+  .td-amber { color: var(--amber); }
+  .td-red { color: var(--red); }
+  .td-blue { color: #93c5fd; }
+  .td-muted { color: var(--muted); font-size: 12px; }
+
+  /* ── Timeline ── */
+  .timeline {
+    position: relative;
+    margin-bottom: 24px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 52px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border-light);
+  }
+  .tl-item {
+    display: flex;
+    gap: 0;
+    margin-bottom: 4px;
+    position: relative;
+  }
+  .tl-label {
+    width: 52px;
+    min-width: 52px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    font-weight: 500;
+    text-align: right;
+    padding-right: 16px;
+    padding-top: 14px;
+    letter-spacing: 0.04em;
+  }
+  .tl-dot-wrap {
+    width: 1px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .tl-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 2px solid var(--navy);
+    position: absolute;
+    left: -4px;
+    top: 16px;
+  }
+  .tl-content {
+    flex: 1;
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-left: 16px;
+    margin-bottom: 12px;
+  }
+  .tl-content-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-bright);
+    margin-bottom: 6px;
+  }
+  .tl-gate {
+    display: inline-block;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    background: rgba(16,185,129,0.1);
+    color: var(--green);
+    border: 1px solid rgba(16,185,129,0.2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+  }
+  .tl-bullets {
+    list-style: none;
+    margin-top: 6px;
+  }
+  .tl-bullets li {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 2px 0 2px 12px;
+    position: relative;
+  }
+  .tl-bullets li::before { content: '·'; position: absolute; left: 0; color: var(--cyan); }
+
+  /* ── Checklist ── */
+  .checklist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .checklist-progress-text {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .checklist-step {
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .checklist-step.completed { border-color: rgba(16,185,129,0.3); }
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .step-num-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    flex-shrink: 0;
+    background: var(--border-light);
+    color: var(--text-dim);
+    transition: all 0.2s;
+  }
+  .checklist-step.completed .step-num-badge {
+    background: rgba(16,185,129,0.2);
+    color: var(--green);
+  }
+  .step-title-wrap { flex: 1; }
+  .step-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .checklist-step.completed .step-title { text-decoration: line-through; color: var(--muted); }
+  .step-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .step-toggle {
+    font-size: 16px;
+    color: var(--muted);
+    transition: transform 0.2s;
+  }
+  .step-toggle.open { transform: rotate(90deg); }
+  .step-body {
+    display: none;
+    padding: 0 16px 14px;
+    border-top: 1px solid var(--border);
+  }
+  .step-body.open { display: block; }
+  .step-body ul { list-style: none; margin-top: 10px; }
+  .step-body ul li {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    padding: 5px 0 5px 16px;
+    position: relative;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+  .step-body ul li:last-child { border-bottom: none; }
+  .step-body ul li::before { content: '→'; position: absolute; left: 0; color: var(--blue); font-size: 11px; top: 6px; }
+  .step-complete-btn {
+    margin-top: 12px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border-light);
+    background: transparent;
+    color: var(--text-dim);
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .step-complete-btn:hover { border-color: var(--green); color: var(--green); background: rgba(16,185,129,0.08); }
+  .checklist-step.completed .step-complete-btn {
+    border-color: rgba(239,68,68,0.3);
+    color: #fca5a5;
+  }
+  .checklist-step.completed .step-complete-btn:hover {
+    background: rgba(239,68,68,0.08);
+  }
+
+  /* ── Risk table ── */
+  .risk-row { cursor: pointer; }
+  .risk-detail-row td {
+    padding: 0 !important;
+    background: rgba(255,255,255,0.015);
+  }
+  .risk-detail-inner {
+    display: none;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-dim);
+    border-top: 1px solid var(--border);
+  }
+  .risk-detail-inner.open { display: block; }
+  .severity-high { color: var(--red); font-weight: 500; }
+  .severity-med { color: var(--amber); font-weight: 500; }
+  .severity-low { color: var(--green); font-weight: 500; }
+  .prob-high { color: var(--red); }
+  .prob-med { color: var(--amber); }
+  .prob-low { color: var(--green); }
+
+  /* ── Section heading h3 ── */
+  .sub-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cyan);
+    margin: 22px 0 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Corridor flow ── */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+  .flow-node {
+    background: var(--navy-3);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: center;
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+  .flow-node-top { font-size: 10px; color: var(--text-dim); margin-bottom: 3px; letter-spacing: 0.04em; }
+  .flow-node-val { font-size: 12px; font-weight: 500; color: var(--text-bright); font-family: 'DM Mono', monospace; }
+  .flow-arrow {
+    color: var(--border-light);
+    font-size: 18px;
+    padding: 0 6px;
+    flex-shrink: 0;
+  }
+
+  /* ── Vendor grid ── */
+  .vendor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .vendor-card {
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .vendor-cat { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); margin-bottom: 6px; }
+  .vendor-name { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-bottom: 3px; }
+  .vendor-reason { font-size: 11.5px; color: var(--text-dim); }
+  .vendor-phase { font-size: 10px; font-family: 'DM Mono', monospace; color: var(--cyan); margin-top: 6px; }
+
+  /* ── Hackathon cards ── */
+  .hack-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+  .hack-card {
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid var(--border);
+  }
+  .hack-blue { background: rgba(37,99,235,0.07); border-color: rgba(37,99,235,0.25); }
+  .hack-green { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.22); }
+  .hack-title { font-size: 15px; font-weight: 600; color: var(--text-bright); margin-bottom: 4px; }
+  .hack-sub { font-size: 11px; color: var(--text-dim); margin-bottom: 14px; }
+  .hack-list { list-style: none; }
+  .hack-list li { font-size: 12.5px; color: var(--text-dim); padding: 4px 0 4px 14px; position: relative; }
+  .hack-list li::before { content: '✓'; position: absolute; left: 0; color: var(--cyan); font-size: 11px; top: 5px; }
+
+  /* ── Comp table highlight ── */
+  .comp-splash td { background: rgba(6,182,212,0.05); color: var(--text); }
+  .comp-splash td:first-child { color: var(--cyan); font-weight: 600; }
+
+  /* ── Financial proj ── */
+  .fin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+  .fin-year {
+    background: var(--navy-3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .fin-year-header {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid var(--border);
+  }
+  .fin-year-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+  .fin-year-title { font-size: 14px; font-weight: 600; color: var(--text-bright); margin-top: 2px; }
+  .fin-rows { padding: 12px 16px; }
+  .fin-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; }
+  .fin-row:last-child { border-bottom: none; }
+  .fin-row-label { color: var(--text-dim); }
+  .fin-row-val { font-family: 'DM Mono', monospace; color: var(--text); font-size: 12px; }
+  .fin-total-row { border-top: 1px solid var(--border-light); margin-top: 4px; padding-top: 8px; }
+  .fin-total-row .fin-row-label { color: var(--text); font-weight: 500; }
+  .fin-total-row .fin-row-val { color: var(--green); font-weight: 500; }
+
+  /* ── Action table ── */
+  .action-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .action-table th { padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); font-weight: 500; }
+  .action-table td { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .action-table tr:last-child td { border-bottom: none; }
+  .action-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-logo">SPLASH</div>
+    <div class="brand-tag">// Business Module v2</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+    <a class="nav-link active" href="#summary" onclick="setActive(this)"><span class="nav-dot"></span>Executive Summary</a>
+    <a class="nav-link" href="#market" onclick="setActive(this)"><span class="nav-dot"></span>Market Opportunity</a>
+    <div class="nav-section-label">Business</div>
+    <a class="nav-link" href="#model" onclick="setActive(this)"><span class="nav-dot"></span>Business Model</a>
+    <a class="nav-link" href="#financials" onclick="setActive(this)"><span class="nav-dot"></span>Financials</a>
+    <a class="nav-link" href="#competitive" onclick="setActive(this)"><span class="nav-dot"></span>Competitive Analysis</a>
+    <div class="nav-section-label">Execution</div>
+    <a class="nav-link" href="#phase1" onclick="setActive(this)"><span class="nav-dot"></span>Phase 1 Plan</a>
+    <a class="nav-link" href="#checklist" onclick="setActive(this)"><span class="nav-dot"></span>Launch Checklist</a>
+    <a class="nav-link" href="#hackathon" onclick="setActive(this)"><span class="nav-dot"></span>Hackathon Strategy</a>
+    <div class="nav-section-label">Infrastructure</div>
+    <a class="nav-link" href="#vendors" onclick="setActive(this)"><span class="nav-dot"></span>Vendor Stack</a>
+    <a class="nav-link" href="#risks" onclick="setActive(this)"><span class="nav-dot"></span>Risk Register</a>
+    <a class="nav-link" href="#team" onclick="setActive(this)"><span class="nav-dot"></span>Team</a>
+  </div>
+  <div class="sidebar-footer">
+    <div style="color: var(--text-dim); margin-bottom:4px; font-size:12px;">Launch checklist</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="sidebar-progress" style="width:0%"></div>
+    </div>
+    <div id="sidebar-progress-text" style="font-size:11px; color:var(--muted);">0 / 10 steps complete</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="main">
+  <div class="page-header">
+    <h1>Splash — Business Module</h1>
+    <div class="header-badges">
+      <span class="badge badge-cyan">Hata Phase 1</span>
+      <span class="badge badge-blue">MY → PH Corridor</span>
+      <span class="badge badge-amber">Sui + USDC</span>
+      <span class="badge badge-green">MVP Ready</span>
+    </div>
+  </div>
+
+  <!-- 01 EXECUTIVE SUMMARY -->
+  <section id="summary">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Executive Summary</h2>
+    </div>
+
+    <div class="info-box info-cyan">
+      <strong>Splash</strong> is a B2B cross-border payment engine built on Sui blockchain. Malaysian SMEs send MYR — recipients receive local currency — in under 5 minutes at 75–120 bps total cost. Phase 1 is one corridor (MY→PH), one liquidity rail (<strong>Hata Exchange only</strong>), one settlement layer (Sui + native USDC).
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card stat-blue">
+        <div class="stat-val">&lt; 5 min</div>
+        <div class="stat-label">Settlement Time</div>
+      </div>
+      <div class="stat-card stat-cyan">
+        <div class="stat-val">75–120 bps</div>
+        <div class="stat-label">Phase 1 Cost</div>
+      </div>
+      <div class="stat-card stat-amber">
+        <div class="stat-val">RM 800k</div>
+        <div class="stat-label">Working Capital</div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-val">8 weeks</div>
+        <div class="stat-label">To Mainnet MVP</div>
+      </div>
+      <div class="stat-card stat-blue">
+        <div class="stat-val">USD 3.2B</div>
+        <div class="stat-label">MY→PH Annual Corridor</div>
+      </div>
+      <div class="stat-card stat-cyan">
+        <div class="stat-val">2</div>
+        <div class="stat-label">Team (Founder + Sebastian)</div>
+      </div>
+    </div>
+
+    <div class="info-box info-amber">
+      <strong>⚠ Phase 1 constraint:</strong> Hata Exchange is the <em>only</em> MYR liquidity rail available in Phase 1. Luno is deferred to Phase 2. Treasury sizing, SOR logic, and build plan all reflect this single-rail reality. Luno plugs in as Tier-3 in Phase 2 with zero Move contract changes.
+    </div>
+
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">The Problem</div>
+        <ul>
+          <li>Malaysian SMEs pay 3–5% via bank SWIFT with 3–5 day settlement</li>
+          <li>Wise blocks businesses — RM 30k/day retail limit applies</li>
+          <li>Informal P2P is illegal under MSB Act 2011 — fines and freezes</li>
+          <li>No API-first, batch-capable solution for MY→SEA payroll</li>
+          <li>USD 8–12B Malaysian SME cross-border outbound annually, underserved</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">The Solution</div>
+        <ul>
+          <li>B2B API-first engine: MYR in → PHP (or local currency) out</li>
+          <li>Sui blockchain settlement: sub-second finality, atomic PTBs</li>
+          <li>Enoki gas sponsorship: users never hold SUI or pay gas</li>
+          <li>Sumsub KYC + Elliptic KYT on every transaction</li>
+          <li>BNM MSB license track from Month 1</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 MARKET -->
+  <section id="market">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Market Opportunity</h2>
+    </div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">TAM / SAM / SOM</div>
+        <ul>
+          <li>SEA cross-border B2B payments: USD 700B+ annually</li>
+          <li>MY→PH corridor: est. USD 3.2B/year (formal + informal)</li>
+          <li>MY→ID corridor: USD 1.8B/year (Phase 2)</li>
+          <li>MY→VN + MY→SG: USD 2.4B/year combined (Phase 3)</li>
+          <li>SEA SME addressable share: USD 85B annually</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Target Customer Profile</div>
+        <ul>
+          <li>Tech agencies paying overseas developers — MYR 20k–200k/mo</li>
+          <li>E-commerce companies paying Philippines suppliers</li>
+          <li>Production studios on freelancer retainers</li>
+          <li>18,000+ Malaysian SMEs with Philippines operations</li>
+          <li>420+ payroll companies processing PHP from Malaysia</li>
+        </ul>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Why Now — Tailwinds</div>
+        <ul>
+          <li>BNM Fintech Sandbox live — faster MSB licensing path</li>
+          <li>Sui mainnet production-grade as of Q1 2026</li>
+          <li>Hata Exchange API v2 — programmatic MYR onramp at scale</li>
+          <li>USDC native on Sui — no bridge risk for settlement</li>
+          <li>Post-COVID remote workforce hiring MY↔PH accelerating</li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Why Splash — Competitive Gap</div>
+        <ul>
+          <li>Stripe, Adyen, Wise — no Malaysia-native B2B API product</li>
+          <li>Regional banks charge 2–3% with 3-day settlement</li>
+          <li>DeFi rails now cost-competitive with CEX on Sui</li>
+          <li>VC thesis shifting to B2B infrastructure — ideal timing</li>
+          <li>First-mover advantage on Hata + Sui + BNM licensing path</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 BUSINESS MODEL -->
+  <section id="model">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Business Model</h2>
+    </div>
+
+    <h3 class="sub-title">Revenue Streams</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Stream</th><th>Pricing</th><th>Phase</th><th>Y1 Est.</th><th>Y2 Est.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="td-accent">Transaction Spread</td><td>45–60 bps on notional</td><td class="td-cyan">P1</td><td>MYR 180k</td><td>MYR 1.4M</td></tr>
+        <tr><td class="td-accent">API Subscription</td><td>MYR 299–999/mo per business</td><td class="td-cyan">P1</td><td>MYR 36k</td><td>MYR 240k</td></tr>
+        <tr><td class="td-accent">Float Income (USDC yield)</td><td>4.2–5.1% APY on treasury</td><td class="td-cyan">P1</td><td>MYR 34k</td><td>MYR 85k</td></tr>
+        <tr><td class="td-accent">Enterprise SLA</td><td>MYR 2–8k/mo custom</td><td class="badge badge-blue" style="display:inline-block;padding:2px 6px;font-size:10px;border-radius:4px;">P2</td><td>—</td><td>MYR 180k</td></tr>
+        <tr><td class="td-accent">FX Hedging Margin</td><td>10–15 bps on hedged volume</td><td class="badge badge-blue" style="display:inline-block;padding:2px 6px;font-size:10px;border-radius:4px;">P2</td><td>—</td><td>MYR 120k</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-title">Unit Economics — Sample Transaction</h3>
+    <div class="info-box info-blue" style="margin-bottom:12px;">SME sends <strong>MYR 12,000</strong> to Philippines supplier</div>
+
+    <div class="flow-row">
+      <div class="flow-node">
+        <div class="flow-node-top">Gross Spread</div>
+        <div class="flow-node-val">MYR 54</div>
+      </div>
+      <div class="flow-arrow">−</div>
+      <div class="flow-node">
+        <div class="flow-node-top">Hata Fee (~8bps)</div>
+        <div class="flow-node-val">MYR 9.60</div>
+      </div>
+      <div class="flow-arrow">−</div>
+      <div class="flow-node">
+        <div class="flow-node-top">Coins.ph (~5bps)</div>
+        <div class="flow-node-val">MYR 6.00</div>
+      </div>
+      <div class="flow-arrow">−</div>
+      <div class="flow-node">
+        <div class="flow-node-top">Gas (Enoki)</div>
+        <div class="flow-node-val">MYR 0.04</div>
+      </div>
+      <div class="flow-arrow">=</div>
+      <div class="flow-node" style="border-color:rgba(16,185,129,0.4); background:rgba(16,185,129,0.06);">
+        <div class="flow-node-top">Net Margin</div>
+        <div class="flow-node-val" style="color:var(--green);">MYR 38.36</div>
+      </div>
+    </div>
+
+    <table class="data-table">
+      <thead><tr><th>Metric</th><th>Value</th><th>Note</th></tr></thead>
+      <tbody>
+        <tr><td>Gross margin per transaction</td><td class="td-green">71%</td><td class="td-muted">MYR 38.36 on MYR 54 gross</td></tr>
+        <tr><td>Break-even monthly volume</td><td class="td-cyan">MYR 780k</td><td class="td-muted">~65 transactions/month</td></tr>
+        <tr><td>Target: MYR 50k daily volume</td><td class="td-green">MYR 1.1M/mo profit</td><td class="td-muted">After estimated ops cost</td></tr>
+        <tr><td>Customer all-in cost (P1)</td><td class="td-cyan">1.5–1.8%</td><td class="td-muted">60–70% cheaper than bank SWIFT</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 04 FINANCIALS -->
+  <section id="financials">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">Financial Projections</h2>
+    </div>
+    <div class="fin-grid">
+      <div class="fin-year">
+        <div class="fin-year-header">
+          <div class="fin-year-label">Year 1 — Phase 1</div>
+          <div class="fin-year-title">Payment Engine</div>
+        </div>
+        <div class="fin-rows">
+          <div class="fin-row"><span class="fin-row-label">Corridors</span><span class="fin-row-val">1 (MY→PH)</span></div>
+          <div class="fin-row"><span class="fin-row-label">Daily volume</span><span class="fin-row-val">MYR 50k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Active accounts</span><span class="fin-row-val">15–30</span></div>
+          <div class="fin-row"><span class="fin-row-label">Spread</span><span class="fin-row-val">45–55 bps</span></div>
+          <div class="fin-row"><span class="fin-row-label">Transaction rev.</span><span class="fin-row-val">MYR 180k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Subscription</span><span class="fin-row-val">MYR 36k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Float income</span><span class="fin-row-val">MYR 34k</span></div>
+          <div class="fin-row fin-total-row"><span class="fin-row-label">Total revenue</span><span class="fin-row-val">MYR 250k</span></div>
+        </div>
+      </div>
+      <div class="fin-year">
+        <div class="fin-year-header">
+          <div class="fin-year-label">Year 2 — Phase 2</div>
+          <div class="fin-year-title">Scale Infrastructure</div>
+        </div>
+        <div class="fin-rows">
+          <div class="fin-row"><span class="fin-row-label">Corridors</span><span class="fin-row-val">5 (PH/ID/VN/SG/IN)</span></div>
+          <div class="fin-row"><span class="fin-row-label">Daily volume</span><span class="fin-row-val">MYR 500k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Active accounts</span><span class="fin-row-val">150–300</span></div>
+          <div class="fin-row"><span class="fin-row-label">Spread</span><span class="fin-row-val">30–40 bps</span></div>
+          <div class="fin-row"><span class="fin-row-label">Transaction rev.</span><span class="fin-row-val">MYR 1.4M</span></div>
+          <div class="fin-row"><span class="fin-row-label">Subscription</span><span class="fin-row-val">MYR 240k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Float income</span><span class="fin-row-val">MYR 85k</span></div>
+          <div class="fin-row fin-total-row"><span class="fin-row-label">Total revenue</span><span class="fin-row-val">MYR 2.1M</span></div>
+        </div>
+      </div>
+      <div class="fin-year">
+        <div class="fin-year-header">
+          <div class="fin-year-label">Year 3 — Phase 3</div>
+          <div class="fin-year-title">Consumer + AI</div>
+        </div>
+        <div class="fin-rows">
+          <div class="fin-row"><span class="fin-row-label">Corridors</span><span class="fin-row-val">8+</span></div>
+          <div class="fin-row"><span class="fin-row-label">Daily volume</span><span class="fin-row-val">MYR 2.5M</span></div>
+          <div class="fin-row"><span class="fin-row-label">Active accounts</span><span class="fin-row-val">800+</span></div>
+          <div class="fin-row"><span class="fin-row-label">Spread</span><span class="fin-row-val">20–30 bps</span></div>
+          <div class="fin-row"><span class="fin-row-label">Transaction rev.</span><span class="fin-row-val">MYR 5.6M</span></div>
+          <div class="fin-row"><span class="fin-row-label">Subscription</span><span class="fin-row-val">MYR 960k</span></div>
+          <div class="fin-row"><span class="fin-row-label">Float income</span><span class="fin-row-val">MYR 200k</span></div>
+          <div class="fin-row fin-total-row"><span class="fin-row-label">Total revenue</span><span class="fin-row-val">MYR 6.8M</span></div>
+        </div>
+      </div>
+    </div>
+    <h3 class="sub-title">Funding Requirements</h3>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Pre-Seed / Hackathon (Now → Month 6)</div>
+        <ul>
+          <li>Treasury working capital: RM 800k</li>
+          <li>SSM + legal setup: RM 15k</li>
+          <li>Sumsub + Elliptic: ~RM 8k/month</li>
+          <li>Shinami RPC + Enoki: ~RM 2k/month</li>
+          <li>CoKeeps MPC custody: ~RM 5k/month</li>
+          <li>Sebastian salary: RM 8–12k/month</li>
+          <li><strong style="color:var(--text)">Total needed: RM 1.0–1.2M</strong></li>
+        </ul>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">Series A (Month 12–18)</div>
+        <ul>
+          <li>Target raise: USD 3–5M</li>
+          <li>Multi-corridor expansion + team growth</li>
+          <li>KPIs needed: MYR 500k/day, 50+ accounts, clean audit</li>
+          <li>Targets: Mysten Labs fund, Sui Foundation grants</li>
+          <li>SEA VCs: Vertex, Monk's Hill, 500 Southeast Asia</li>
+          <li>Apply: Sui Foundation grant at sui.io/grants (strong DeFi infra fit)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 COMPETITIVE -->
+  <section id="competitive">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Competitive Analysis</h2>
+    </div>
+    <div class="info-box info-blue">Nobody serves Malaysian SMEs on the MY→PH corridor with an API-first, batch-capable, regulated product. Our moat: MSB license + Hata relationship + Sui-native tech + KYC data network = 18–36 months to replicate.</div>
+    <table class="data-table">
+      <thead>
+        <tr><th>Provider</th><th>Cost</th><th>Speed</th><th>B2B SME?</th><th>Batch API?</th><th>MY-native?</th><th>Rail</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Bank SWIFT (Maybank/CIMB)</td><td class="td-red">3–5%</td><td class="td-red">3–5 days</td><td>Yes</td><td>No</td><td>Yes</td><td class="td-muted">SWIFT</td></tr>
+        <tr><td>Wise Business</td><td class="td-amber">1.5–2%</td><td class="td-amber">1–2 days</td><td>No (MY blocked)</td><td>No</td><td>No</td><td class="td-muted">Internal</td></tr>
+        <tr><td>Tranglo</td><td class="td-amber">1–2%</td><td class="td-green">Same day</td><td>Yes (limited)</td><td>Yes</td><td>Yes</td><td class="td-muted">Bank + MSB</td></tr>
+        <tr><td>Thunes</td><td class="td-amber">0.8–1.5%</td><td class="td-green">Hours</td><td>Enterprise only</td><td>Yes</td><td>No</td><td class="td-muted">Bank</td></tr>
+        <tr><td>Ripple/ODL</td><td class="td-green">0.3–0.6%</td><td class="td-green">Minutes</td><td>Banks only</td><td>Yes</td><td>No</td><td class="td-muted">XRP</td></tr>
+        <tr><td>Informal P2P</td><td class="td-amber">~1%</td><td class="td-amber">Variable</td><td>No</td><td>No</td><td>—</td><td class="td-red">Illegal (MSB Act)</td></tr>
+        <tr class="comp-splash"><td>SPLASH (Phase 1)</td><td>1.5–1.8%</td><td>&lt; 5 min</td><td>Yes</td><td>Yes</td><td>Yes</td><td style="color:var(--cyan)">Sui + Hata</td></tr>
+        <tr class="comp-splash"><td>SPLASH (Phase 2)</td><td>0.5–0.8%</td><td>&lt; 2 min</td><td>Yes</td><td>Yes</td><td>Yes</td><td style="color:var(--cyan)">Sui + Bank FX</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 06 PHASE 1 PLAN -->
+  <section id="phase1">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Phase 1 Build Plan</h2>
+    </div>
+    <div class="info-box info-green">
+      <strong>Ship gate — Week 8:</strong> One real MYR 4,000+ MY→PH transaction settled in &lt; 5 minutes, full audit trail, zero exceptions.
+    </div>
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-label">W1–2</div>
+        <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Foundation</div>
+          <ul class="tl-bullets">
+            <li>Monorepo: apps/, packages/, contracts/ · CI/CD: GitHub Actions + Docker</li>
+            <li>Sui testnet: business_account.move + payment_intent.move deployed</li>
+            <li>TS SDK: PTB construction verified end-to-end</li>
+          </ul>
+          <span class="tl-gate">Gate: PTB executes on Sui testnet</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-label">W3–4</div>
+        <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Core Flows</div>
+          <ul class="tl-bullets">
+            <li>Hata API: order → execute → withdraw (sole P1 MYR rail)</li>
+            <li>Coins.ph: USDC → PHP off-ramp integration</li>
+            <li>Orchestrator: stateful workflow engine</li>
+            <li>Sumsub KYC integration for SME onboarding</li>
+          </ul>
+          <span class="tl-gate">Gate: MYR→USDC→PHP flow on testnet</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-label">W5–6</div>
+        <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+        <div class="tl-content">
+          <div class="tl-content-title">Compliance & Audit</div>
+          <ul class="tl-bullets">
+            <li>Append-only audit DB (Postgres immutable)</li>
+            <li>Pyth oracle: FX + USDT peg monitor (30bps tolerance)</li>
+            <li>Elliptic KYT + sanctions screening pre-transaction</li>
+            <li>Ops admin dashboard</li>
+          </ul>
+          <span class="tl-gate">Gate: All compliance hooks wired</span>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-label">W7–8</div>
+        <div class="tl-dot-wrap"><div class="tl-dot" style="background:var(--green)"></div></div>
+        <div class="tl-content" style="border-color:rgba(16,185,129,0.3)">
+          <div class="tl-content-title">User MVP + Ship</div>
+          <ul class="tl-bullets">
+            <li>Web dashboard: Send / Confirm / Track</li>
+            <li>CSV upload for batch payouts · PDF receipt generation</li>
+            <li>Mainnet deploy + first real MYR 4,000+ transaction</li>
+          </ul>
+          <span class="tl-gate">🚀 Gate: 1 live tx on Sui mainnet, &lt; 5 min, full audit trail</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 LAUNCH CHECKLIST -->
+  <section id="checklist">
+    <div class="section-header">
+      <span class="section-num">07</span>
+      <h2 class="section-title">Launch Checklist</h2>
+    </div>
+    <div class="info-box info-blue">App is built. Sebastian has the codebase. Click each step to expand details. Mark complete as you go — progress saves in your browser.</div>
+
+    <div class="checklist-header">
+      <div style="font-size:13px;color:var(--text-dim);">Your sequenced execution checklist</div>
+      <div class="checklist-progress-text" id="cl-progress-text">0 of 10 complete</div>
+    </div>
+
+    <div id="checklist-container"></div>
+  </section>
+
+  <!-- 08 HACKATHON STRATEGY -->
+  <section id="hackathon">
+    <div class="section-header">
+      <span class="section-num">08</span>
+      <h2 class="section-title">Hackathon Strategy</h2>
+    </div>
+    <div class="hack-grid">
+      <div class="hack-card hack-blue">
+        <div class="hack-title">Sui Overflow 2025</div>
+        <div class="hack-sub">Track: DeFi / Infrastructure · Prize Pool: USD 100k+ · Judges: Mysten Labs, ecosystem funds</div>
+        <ul class="hack-list">
+          <li>Lead with atomic PTB — 6-step payment in one Sui transaction</li>
+          <li>Emphasize user-owned Move objects (BusinessAccount key only)</li>
+          <li>Demo Enoki gas sponsorship — users never hold SUI</li>
+          <li>Show Pyth oracle real-time FX pricing integration</li>
+          <li>Hot-potato PaymentIntent — anti-rug by design</li>
+          <li>DeepBook V3 for on-chain USDC↔USDT routing</li>
+          <li>GitHub: clean README with Move contract docs</li>
+          <li>Demo video: 3 min — live MY→PH transaction end-to-end</li>
+        </ul>
+      </div>
+      <div class="hack-card hack-green">
+        <div class="hack-title">DeFi Moonshot</div>
+        <div class="hack-sub">Focus: Real-world DeFi for B2B cross-border payments. Not speculation — infrastructure.</div>
+        <ul class="hack-list">
+          <li>Frame as 'DeFi for real people' — SME payroll, not yield farming</li>
+          <li>USDC as settlement — eliminates FX conversion loss</li>
+          <li>Show cost: bank wire 2.5% vs Splash 75–120 bps (10x cheaper)</li>
+          <li>Show time: bank 2–5 days vs Splash &lt; 5 minutes</li>
+          <li>Market: USD 700B SEA B2B cross-border — not a niche</li>
+          <li>Sui's 400ms finality = faster than any bank wire</li>
+          <li>DeepBook V3 = competitive on-chain liquidity</li>
+          <li>Use this Business Module PDF as supplementary material</li>
+        </ul>
+      </div>
+    </div>
+    <h3 class="sub-title">Submission Checklist for Both Hackathons</h3>
+    <table class="data-table">
+      <thead><tr><th>Item</th><th>Sui Overflow</th><th>DeFi Moonshot</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Working demo URL</td><td>Required</td><td>Required</td><td class="td-amber">Pending testnet deploy</td></tr>
+        <tr><td>GitHub repo</td><td>Required (public or judge access)</td><td>Required</td><td class="td-amber">Pending</td></tr>
+        <tr><td>3-min demo video</td><td>Required</td><td>Required</td><td class="td-amber">Pending</td></tr>
+        <tr><td>Business module / deck</td><td>Supplementary</td><td>Required</td><td class="td-green">Done (this doc)</td></tr>
+        <tr><td>Team info</td><td>Required</td><td>Required</td><td class="td-green">Founder + Sebastian</td></tr>
+        <tr><td>On-chain transactions</td><td>Required</td><td>Recommended</td><td class="td-amber">Testnet: pending</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 09 VENDOR STACK -->
+  <section id="vendors">
+    <div class="section-header">
+      <span class="section-num">09</span>
+      <h2 class="section-title">Vendor Stack</h2>
+    </div>
+    <div class="info-box info-cyan">Five decisions to lock in by Month 3. These shape the stack for 2+ years. All Phase 1 decisions are final — do not swap vendors mid-flight.</div>
+    <div class="vendor-grid">
+      <div class="vendor-card" style="border-color:rgba(6,182,212,0.3)">
+        <div class="vendor-cat">MYR Liquidity</div>
+        <div class="vendor-name">Hata Exchange</div>
+        <div class="vendor-reason">Only programmatic MYR onramp API available in Phase 1. Luno deferred to P2.</div>
+        <div class="vendor-phase">→ Phase 1 only</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">PHP Off-ramp</div>
+        <div class="vendor-name">Coins.ph</div>
+        <div class="vendor-reason">Primary PHP partner. Backup needed: GCash API or Maya by Month 4.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">Gas Sponsorship</div>
+        <div class="vendor-name">Enoki</div>
+        <div class="vendor-reason">Mysten-native, best integration, allowlist controls. vs Shinami.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">Sui RPC</div>
+        <div class="vendor-name">Shinami</div>
+        <div class="vendor-reason">Reliable Phase 1. Self-host at Phase 2 when volume justifies ops cost.</div>
+        <div class="vendor-phase">→ Phase 1, self-host P2</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">Treasury MPC</div>
+        <div class="vendor-name">CoKeeps</div>
+        <div class="vendor-reason">Malaysia localization, BNM-familiar, MSB-friendly. 3-of-5 for treasury.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">KYT Monitoring</div>
+        <div class="vendor-name">Elliptic</div>
+        <div class="vendor-reason">Strong Sui coverage, competitive pricing, enterprise SLAs. vs Chainalysis.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">KYC</div>
+        <div class="vendor-name">Sumsub</div>
+        <div class="vendor-reason">Strong SEA coverage, competitive pricing, business + UBO verification.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">Contract Audit</div>
+        <div class="vendor-name">OtterSec</div>
+        <div class="vendor-reason">Move specialists, Mysten ecosystem audit history. vs Movebit / Zellic.</div>
+        <div class="vendor-phase">→ Pre-mainnet (Month 6)</div>
+      </div>
+      <div class="vendor-card">
+        <div class="vendor-cat">Stablecoin</div>
+        <div class="vendor-name">USDC (native Sui)</div>
+        <div class="vendor-reason">Canonical accounting. No bridge risk. USDT for routing only if peg safe.</div>
+        <div class="vendor-phase">→ Phase 1+</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 RISK REGISTER -->
+  <section id="risks">
+    <div class="section-header">
+      <span class="section-num">10</span>
+      <h2 class="section-title">Risk Register</h2>
+    </div>
+    <div class="info-box info-amber">Click any row to expand the mitigation strategy.</div>
+    <table class="data-table" id="risk-table">
+      <thead>
+        <tr><th>Risk</th><th>Severity</th><th>Probability</th><th>Category</th></tr>
+      </thead>
+      <tbody id="risk-tbody"></tbody>
+    </table>
+  </section>
+
+  <!-- 11 TEAM -->
+  <section id="team">
+    <div class="section-header">
+      <span class="section-num">11</span>
+      <h2 class="section-title">Team & Next Actions</h2>
+    </div>
+    <div class="two-col">
+      <div class="col-card">
+        <div class="col-card-title">Founder / CEO</div>
+        <ul>
+          <li>Product strategy, business development, regulatory</li>
+          <li>SSM, banking, Hata partnership, BNM MSB application</li>
+          <li>Pilot client acquisition, hackathon submissions</li>
+          <li>Fundraising, investor relations</li>
+        </ul>
+        <div style="margin-top:12px;">
+          <div class="col-card-title">Hires needed (Month 3–6)</div>
+          <ul>
+            <li>Compliance Officer (BNM MSB requirement)</li>
+            <li>Business Development (SEA market)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-card">
+        <div class="col-card-title">CTO — Sebastian</div>
+        <ul>
+          <li>Full-stack: TypeScript, Rust, Move smart contracts</li>
+          <li>Hata API + Coins.ph integration</li>
+          <li>Sui testnet → mainnet deploy</li>
+          <li>DevOps, CI/CD, monorepo, security hardening</li>
+          <li>All 8 weeks of build plan execution</li>
+        </ul>
+        <div style="margin-top:12px;">
+          <div class="col-card-title">External (Month 1–3)</div>
+          <ul>
+            <li>OtterSec — Move smart contract audit</li>
+            <li>CoKeeps — MPC treasury custody</li>
+            <li>Skrine — Regulatory counsel (MSB application)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Next Actions — This Week</h3>
+    <table class="action-table">
+      <thead><tr><th>When</th><th>Action</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td class="td-cyan">Day 1</td><td>Sebastian: monorepo + deploy contracts to Sui testnet</td><td>Sebastian</td></tr>
+        <tr><td class="td-cyan">Day 1–2</td><td>File SSM registration online (mycoID.ssm.com.my) — Sdn Bhd, code 6619</td><td>Founder</td></tr>
+        <tr><td class="td-cyan">Day 2</td><td>Email Hata Exchange for business account + API access application</td><td>Founder</td></tr>
+        <tr><td class="td-cyan">Day 3</td><td>Email partnerships@coins.ph for PHP off-ramp API access</td><td>Founder</td></tr>
+        <tr><td class="td-cyan">Day 3</td><td>Register for Sui Overflow at suioverflow.com</td><td>Founder</td></tr>
+        <tr><td class="td-cyan">Day 3</td><td>Register for DeFi Moonshot at defimoonshot.com</td><td>Founder</td></tr>
+        <tr><td class="td-amber">Week 1</td><td>Maybank / CIMB business account appointment (post-SSM cert)</td><td>Founder</td></tr>
+        <tr><td class="td-amber">Week 2</td><td>Sumsub + Elliptic API access request</td><td>Both</td></tr>
+        <tr><td class="td-amber">Week 2–3</td><td>Hata sandbox API integration: order → execute → withdraw</td><td>Sebastian</td></tr>
+        <tr><td class="td-amber">Month 1</td><td>First end-to-end testnet demo: MYR → USDC → PHP</td><td>Sebastian</td></tr>
+        <tr><td style="color:var(--green)">Month 3</td><td>BNM MSB Class D application filed via eBiz portal</td><td>Founder</td></tr>
+        <tr><td style="color:var(--green)">Month 3</td><td>Mainnet deploy — first real MYR 4,000+ transaction</td><td>Both</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+  const steps = [
+    {
+      id: 1,
+      title: "Register SSM — Sdn Bhd",
+      meta: "mycoID.ssm.com.my · Cost: RM 1,010 · 1–3 business days",
+      color: "#0F172A",
+      items: [
+        "Go to mycoID.ssm.com.my — choose 'Sendirian Berhad' (Sdn Bhd)",
+        "Company name: 'Splash Financial Technologies Sdn Bhd' or 'Splash Pay Sdn Bhd'",
+        "Paid-up capital: minimum RM 1 (recommend RM 100,000 for bank credibility)",
+        "Directors: minimum 2 Malaysian residents (you + co-founder or nominee)",
+        "Business code: 6619 (Other Activities Auxiliary to Financial Service Activities)",
+        "Cost: RM 1,010 (online) | Timeline: 1–3 business days",
+        "Obtain: Certificate of Incorporation + M&A documents — needed for ALL subsequent steps"
+      ]
+    },
+    {
+      id: 2,
+      title: "Open Business Bank Account",
+      meta: "Maybank Business Current or CIMB BizChannel · 5–10 days post-SSM",
+      items: [
+        "Recommended: Maybank Business Current Account (BNM-familiar) OR CIMB BizChannel",
+        "Required docs: SSM certificate, director ICs, M&A documents, board resolution",
+        "Also open RHB or OCBC as secondary account (Hata payout may require this)",
+        "Get: company letterhead template, rubber stamp, board resolution template",
+        "This account receives FPX payments from SME customers — must be MSB-tier eligible"
+      ]
+    },
+    {
+      id: 3,
+      title: "Apply for Hata Exchange Business Account",
+      meta: "hata.exchange · KYB approval: 2–4 weeks — apply NOW, parallel to SSM",
+      items: [
+        "Go to hata.exchange — apply for Business / Institutional account",
+        "Required: SSM cert, director ICs, business bank account details, AML policy doc",
+        "Request API access tier — specify you need programmatic MYR order placement",
+        "Get Hata API keys: sandbox first, production after KYB approval",
+        "Sebastian: integrate Hata API sandbox — test order → execute → withdraw flow",
+        "CRITICAL: This is your ONLY MYR onramp in Phase 1 — block nothing on this KYB"
+      ]
+    },
+    {
+      id: 4,
+      title: "Register Coins.ph Partner Account (PHP Off-ramp)",
+      meta: "partnerships@coins.ph · Partner approval: 1–3 weeks",
+      items: [
+        "Email: partnerships@coins.ph — introduce Splash as B2B payment infrastructure",
+        "Request: Business/API access for USDC → PHP settlement disbursement",
+        "Provide: SSM cert, business profile, use case (B2B payroll/supplier payments MY→PH)",
+        "Sebastian: integrate Coins.ph disbursement API alongside Hata integration",
+        "Secure backup off-ramp options (GCash API, Maya) by Month 4 as redundancy"
+      ]
+    },
+    {
+      id: 5,
+      title: "Sui Testnet → Mainnet Deploy",
+      meta: "Sebastian leads · 2+ weeks testnet minimum before mainnet",
+      items: [
+        "Sebastian: deploy business_account.move + payment_intent.move to Sui testnet (Day 1)",
+        "Run 2+ weeks of testnet transactions before mainnet — no shortcuts",
+        "Set up Enoki gas sponsorship account (enoki.mystenlabs.com)",
+        "Set up Shinami RPC node (shinami.com/sui-rpc) for reliable Sui RPC",
+        "Set up CoKeeps MPC treasury wallet (3-of-5 for treasury, 2-of-3 for compliance)",
+        "Deploy to Sui mainnet — target first transaction: MYR 4,000+",
+        "Announce on Sui Discord + ecosystem channels post-mainnet"
+      ]
+    },
+    {
+      id: 6,
+      title: "Submit to Hackathons",
+      meta: "Sui Overflow · DeFi Moonshot · Both require live demo + GitHub",
+      items: [
+        "Sui Overflow: suioverflow.com — track: DeFi / Infrastructure",
+        "DeFi Moonshot: defimoonshot.com — focus: real-world DeFi use case",
+        "Required for both: working demo URL, GitHub repo, 3-min demo video, team info",
+        "Sui Overflow angle: atomic PTB, user-owned Move objects, Enoki gas, DeepBook",
+        "DeFi Moonshot angle: 10x cheaper than bank wire, 5 min vs 5 days, USD 700B TAM",
+        "Use this Business Module as the business supplement for DeFi Moonshot"
+      ]
+    },
+    {
+      id: 7,
+      title: "Sumsub KYC Integration",
+      meta: "sumsub.com · 1 week integration · Required before first real customer",
+      items: [
+        "Register at sumsub.com/pricing — get API keys for identity verification",
+        "Integrate KYC flow into onboarding: business verification + UBO check",
+        "Configure KYC tiers: Tier 1 (RM 10k/day limit), Tier 2 (RM 100k/day)",
+        "Sebastian: wire Sumsub callbacks to business_account.move KYC status field",
+        "Test full KYC flow with a real business entity before pilot launch"
+      ]
+    },
+    {
+      id: 8,
+      title: "Elliptic KYT Integration",
+      meta: "elliptic.co · Confirm Sui coverage · 1–2 weeks integration",
+      items: [
+        "Register at elliptic.co — confirm Sui blockchain coverage first",
+        "Integrate pre-transaction screening: check USDC address against sanctions lists",
+        "Set up Tether blacklist check for any USDT routing paths",
+        "Sebastian: wire KYT results to PaymentIntent compliance gate in Move contract",
+        "Set up alerting for flagged transactions — manual review workflow required"
+      ]
+    },
+    {
+      id: 9,
+      title: "File BNM MSB Application",
+      meta: "MSB Class D (Remittance) · bnm.gov.my eBiz portal · Apply Month 3",
+      items: [
+        "Target: MSB Class D (Remittance only) — upgrade to Class A in Phase 2",
+        "Apply via BNM's eBiz portal at bnm.gov.my after 3 months of operational data",
+        "Required: corporate docs, AML/CFT policy, compliance officer appointment, audited accounts",
+        "Engage compliance consultant: KPMG Malaysia MSB team or Zaid Ibrahim & Co",
+        "Cost: ~RM 50–80k (consultant + government fees) · Timeline: 3–6 months review",
+        "DO NOT wait until later — start the queue early. Apply Month 3, expect approval Month 9–12"
+      ]
+    },
+    {
+      id: 10,
+      title: "Onboard First 3 Pilot Clients",
+      meta: "Target: Malaysian SMEs with active PH payroll · Free first 3 months",
+      items: [
+        "Target: Malaysian SMEs with Philippines payroll (manufacturing, BPO, services)",
+        "Channels: LinkedIn outreach to finance managers, referrals from accounting firms",
+        "Offer: free first 3 months — get testimonials + transaction data for BNM application",
+        "Required: pilot agreement (simple), basic T&C on website before first transaction",
+        "Collect: transaction data for BNM application, AML logs, KYC records",
+        "Target: 3 pilots at MYR 5–15k per transaction, minimum 5 transactions each"
+      ]
+    }
+  ];
+
+  const risks = [
+    { risk: "Hata API downtime / rate limits", sev: "High", prob: "Medium", cat: "Technical", mit: "Implement circuit breaker in orchestrator. On-chain DEX (DeepBook) as emergency fallback. Negotiate SLA agreement with Hata. 24/7 health monitoring + PagerDuty alerting." },
+    { risk: "Hata only — single rail dependency (Phase 1)", sev: "High", prob: "High", cat: "Operational", mit: "Known and accepted Phase 1 risk. Maintain Hata float well-funded (RM 120–150k). Keep Luno KYB application in queue for Phase 2 plug-in. No contract changes needed when Luno added." },
+    { risk: "BNM MSB license delay > 12 months", sev: "High", prob: "Medium", cat: "Regulatory", mit: "Operate under exemption for < RM 3M annual volume. Partner with existing licensed MSB as fronting entity if needed. Engage Skrine from Day 1 to optimize application." },
+    { risk: "USDT de-peg event", sev: "High", prob: "Low", cat: "Financial", mit: "30bps peg tolerance + auto-pause at USDT < 0.997 (5-min monitoring). USDC-only fallback path always available. USDT held < 30 min round-trip by design. Switchboard fallback oracle." },
+    { risk: "Smart contract exploit / bug", sev: "Critical", prob: "Low", cat: "Security", mit: "OtterSec audit pre-mainnet. Move Prover formal verification on critical paths. Emergency pause: dual-sig < 5 min trigger. Immunefi bug bounty $50k–$500k. Testnet 2+ weeks minimum." },
+    { risk: "Coins.ph off-ramp suspension", sev: "High", prob: "Low", cat: "Operational", mit: "Pre-negotiate backup by Month 4: GCash API, Maya, or direct partner bank in Philippines. Never go live with only one off-ramp option." },
+    { risk: "Customer KYC/AML failure", sev: "Medium", prob: "Medium", cat: "Compliance", mit: "Sumsub + Elliptic dual-layer. Suspicious Activity Reports filed per BNM guidelines. Manual review workflow for flagged transactions. Compliance officer hired by Month 4." },
+    { risk: "FX volatility (MYR/PHP)", sev: "Medium", prob: "Medium", cat: "Financial", mit: "Pyth + Switchboard dual oracle. FX quote lock: 30 seconds. Auto-pause if spread exceeds threshold. FX hedging added in Phase 2 via Labuan entity + prime broker." }
+  ];
+
+  function loadChecklist() {
+    const container = document.getElementById('checklist-container');
+    const saved = JSON.parse(localStorage.getItem('splash-checklist') || '{}');
+    container.innerHTML = '';
+    steps.forEach(step => {
+      const done = !!saved[step.id];
+      const div = document.createElement('div');
+      div.className = 'checklist-step' + (done ? ' completed' : '');
+      div.id = 'step-' + step.id;
+      div.innerHTML = `
+        <div class="step-header" onclick="toggleStep(${step.id})">
+          <div class="step-num-badge">${done ? '✓' : step.id}</div>
+          <div class="step-title-wrap">
+            <div class="step-title">${step.title}</div>
+            <div class="step-meta">${step.meta}</div>
+          </div>
+          <div class="step-toggle" id="toggle-${step.id}">›</div>
+        </div>
+        <div class="step-body" id="body-${step.id}">
+          <ul>${step.items.map(i => `<li>${i}</li>`).join('')}</ul>
+          <button class="step-complete-btn" onclick="toggleComplete(event, ${step.id})">
+            ${done ? '↩ Mark incomplete' : '✓ Mark complete'}
+          </button>
+        </div>`;
+      container.appendChild(div);
+    });
+    updateProgress();
+  }
+
+  function toggleStep(id) {
+    const body = document.getElementById('body-' + id);
+    const toggle = document.getElementById('toggle-' + id);
+    const open = body.classList.toggle('open');
+    toggle.classList.toggle('open', open);
+  }
+
+  function toggleComplete(e, id) {
+    e.stopPropagation();
+    const saved = JSON.parse(localStorage.getItem('splash-checklist') || '{}');
+    if (saved[id]) delete saved[id]; else saved[id] = true;
+    localStorage.setItem('splash-checklist', JSON.stringify(saved));
+    loadChecklist();
+    const body = document.getElementById('body-' + id);
+    if (body) { body.classList.add('open'); document.getElementById('toggle-' + id).classList.add('open'); }
+  }
+
+  function updateProgress() {
+    const saved = JSON.parse(localStorage.getItem('splash-checklist') || '{}');
+    const done = Object.keys(saved).length;
+    const pct = Math.round((done / steps.length) * 100);
+    document.getElementById('sidebar-progress').style.width = pct + '%';
+    document.getElementById('sidebar-progress-text').textContent = done + ' / ' + steps.length + ' steps complete';
+    document.getElementById('cl-progress-text').textContent = done + ' of ' + steps.length + ' complete';
+  }
+
+  function loadRisks() {
+    const tbody = document.getElementById('risk-tbody');
+    risks.forEach((r, i) => {
+      const sevClass = r.sev === 'Critical' || r.sev === 'High' ? 'severity-high' : r.sev === 'Medium' ? 'severity-med' : 'severity-low';
+      const probClass = r.prob === 'High' ? 'prob-high' : r.prob === 'Medium' ? 'prob-med' : 'prob-low';
+      const row = document.createElement('tr');
+      row.className = 'risk-row';
+      row.onclick = () => {
+        const detail = document.getElementById('risk-detail-' + i);
+        if (detail) detail.classList.toggle('open');
+      };
+      row.innerHTML = `<td class="td-accent">${r.risk}</td><td class="${sevClass}">${r.sev}</td><td class="${probClass}">${r.prob}</td><td class="td-muted">${r.cat}</td>`;
+      tbody.appendChild(row);
+      const detailRow = document.createElement('tr');
+      detailRow.className = 'risk-detail-row';
+      detailRow.innerHTML = `<td colspan="4"><div class="risk-detail-inner" id="risk-detail-${i}"><strong style="color:var(--text)">Mitigation:</strong> ${r.mit}</div></td>`;
+      tbody.appendChild(detailRow);
+    });
+  }
+
+  function setActive(el) {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  window.addEventListener('scroll', () => {
+    const sections = document.querySelectorAll('section[id]');
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY + 120 >= s.offsetTop) current = s.id;
+    });
+    document.querySelectorAll('.nav-link').forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  });
+
+  loadChecklist();
+  loadRisks();
+</script>
+</body>
+</html>

@@ -6,10 +6,13 @@ import { Zap, FileText, BarChart2, Upload, ChevronDown, ArrowRight, Check, X, Me
 function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
-    <nav className="sticky top-0 z-50 w-full" style={{ backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--outline)" }}>
+    <nav
+      className="sticky top-0 z-50 w-full"
+      style={{ backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderBottom: "1px solid var(--outline)" }}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2.5 shrink-0">
-          <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg"  />
+          <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg" />
           <span className="text-lg font-semibold tracking-tight" style={{ color: "var(--indigo)" }}>Splash</span>
         </Link>
         <div className="hidden md:flex items-center gap-8">
@@ -52,8 +55,7 @@ function Hero() {
   const RECEIVE = parseFloat((NET * rate).toFixed(2));
 
   useEffect(() => {
-    const base = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
-    fetch(`${base}/api/fx-rate`)
+    fetch("/api/fx-rate")
       .then(r => r.json())
       .then(d => { if (d && d.rate) setRate(parseFloat(d.rate)); })
       .catch(() => {})
@@ -61,7 +63,7 @@ function Hero() {
   }, []);
 
   return (
-    <section className="relative overflow-hidden" style={{ backgroundColor: "var(--sidebar)" }}>
+    <section className="relative overflow-hidden" style={{ backgroundColor: "var(--sidebar-dark)" }}>
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(34,167,240,0.18) 0%, transparent 70%)", transform: "translate(30%,-30%)" }} />
       <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(0,210,160,0.12) 0%, transparent 70%)", transform: "translate(-30%,30%)" }} />
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center">
@@ -72,7 +74,7 @@ function Hero() {
           </div>
           <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight leading-tight text-white mb-5">
             Make Money Move{" "}
-            <span style={{ color: "var(--indigo)" }}>Faster, Cheaper & Wiser</span>
+            <span style={{ color: "var(--indigo)" }}>Faster, Cheaper &amp; Wiser</span>
           </h1>
           <p className="text-base sm:text-lg leading-relaxed mb-8" style={{ color: "rgba(255,255,255,0.72)" }}>
             One flat <strong className="text-white">1.5% all-in fee</strong>. No hidden charges. Transfers settle in under 5 minutes directly to your recipient's Philippine bank account.
@@ -88,7 +90,6 @@ function Hero() {
         </div>
         <div className="flex justify-center md:justify-end">
           <div className="w-full max-w-sm rounded-2xl p-6 shadow-2xl" style={{ backgroundColor: "#fff", border: "1px solid var(--outline)" }}>
-            {/* Header */}
             <div className="flex items-center justify-between mb-5">
               <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--ink-3)" }}>Preview</span>
               <span className="text-xs font-medium rounded-full px-2.5 py-0.5 flex items-center gap-1" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}>
@@ -96,8 +97,6 @@ function Hero() {
                 {rateLoading ? "Fetching rate…" : "Live rate"}
               </span>
             </div>
-
-            {/* You send — editable */}
             <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: "var(--raised)" }}>
               <div className="text-xs font-medium mb-2" style={{ color: "var(--ink-3)" }}>You send</div>
               <div className="flex items-center justify-between gap-2">
@@ -114,8 +113,6 @@ function Hero() {
                 <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 shrink-0" style={{ backgroundColor: "var(--indigo)", color: "#fff" }}>🇲🇾 MYR</span>
               </div>
             </div>
-
-            {/* Rate row */}
             <div className="flex items-center gap-3 px-1 mb-3">
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--outline)" }} />
               <div className="text-xs tabular-nums font-medium" style={{ color: "var(--ink-3)" }}>
@@ -123,8 +120,6 @@ function Hero() {
               </div>
               <div className="flex-1 h-px" style={{ backgroundColor: "var(--outline)" }} />
             </div>
-
-            {/* Recipient gets */}
             <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: "var(--success-bg)", border: "1px solid var(--success-border)" }}>
               <div className="text-xs font-medium mb-2" style={{ color: "var(--ink-3)" }}>Recipient gets</div>
               <div className="flex items-center justify-between gap-2">
@@ -134,8 +129,6 @@ function Hero() {
                 <span className="flex items-center gap-1.5 text-sm font-semibold rounded-lg px-3 py-1.5 shrink-0" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}>🇵🇭 PHP</span>
               </div>
             </div>
-
-            {/* Fee breakdown */}
             <div className="space-y-2 text-sm mb-4">
               <div className="flex justify-between">
                 <span style={{ color: "var(--ink-3)" }}>Transfer fee (1.5%)</span>
@@ -146,15 +139,12 @@ function Hero() {
                 <span className="font-medium" style={{ color: "var(--success)" }}>&lt; 5 minutes</span>
               </div>
             </div>
-
-            {/* Compliance notice */}
             <div className="flex gap-2.5 rounded-xl p-3 mb-4" style={{ backgroundColor: "#FFF8E6", border: "1px solid #FFE4A0" }}>
               <span className="text-base shrink-0 mt-0.5">⚠️</span>
               <p className="text-xs leading-relaxed" style={{ color: "#7A5500" }}>
                 This account must only be used for your own business transactions. Any transactions performed on behalf of others will result in account deactivation.
               </p>
             </div>
-
             <Link to="/login" className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90" style={{ backgroundColor: "var(--indigo)" }}>
               Send now <ArrowRight size={15} />
             </Link>
@@ -223,8 +213,14 @@ function HowItWorks() {
 }
 
 // ─── Pricing table ────────────────────────────────────────────────────────────
+function BoolCell({ val }: { val: boolean }) {
+  return val
+    ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}><Check size={13} strokeWidth={3} /></span>
+    : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--danger-bg)", color: "var(--danger)" }}><X size={13} strokeWidth={3} /></span>;
+}
+
 function PricingTable() {
-  const rows = [
+  const rows: { feature: string; splash: string | boolean; banks: string | boolean; others: string | boolean }[] = [
     { feature: "Transfer fee", splash: "1.5% flat, all-in", banks: "3–5% + hidden charges", others: "2–4% + markup" },
     { feature: "Exchange rate", splash: "Mid-market rate", banks: "Marked up 2–3%", others: "Marked up 1–2%" },
     { feature: "Settlement speed", splash: "< 5 minutes", banks: "1–3 business days", others: "Hours to 1 day" },
@@ -232,9 +228,6 @@ function PricingTable() {
     { feature: "Batch payouts", splash: true, banks: false, others: false },
     { feature: "PDF receipts", splash: true, banks: false, others: true },
   ];
-  const BoolCell = ({ val }) => val
-    ? <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--success-bg)", color: "var(--success)" }}><Check size={13} strokeWidth={3} /></span>
-    : <span className="inline-flex items-center justify-center w-6 h-6 rounded-full" style={{ backgroundColor: "var(--danger-bg)", color: "var(--danger)" }}><X size={13} strokeWidth={3} /></span>;
   return (
     <section id="pricing" className="py-20" style={{ backgroundColor: "#fff" }}>
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
@@ -287,7 +280,7 @@ function Features() {
     { icon: <Zap size={22} />, title: "Live exchange rates", description: "Rates refresh every 10 minutes from the mid-market feed. What you see is what your recipient gets.", color: "var(--indigo)" },
     { icon: <Upload size={22} />, title: "Batch payouts via CSV", description: "Upload a CSV to pay dozens of Philippine recipients in one go. Perfect for payroll and supplier runs.", color: "var(--warning)" },
     { icon: <FileText size={22} />, title: "Instant PDF receipts", description: "Every transfer generates a branded PDF receipt emailed to you automatically. Audit-ready from day one.", color: "var(--success)" },
-    { icon: <BarChart2 size={22} />, title: "Real-time tracking", description: "Watch your transfer move from initiated to settled. Powered by Sui blockchain technology for tamper-proof records.", color: "var(--sidebar)" },
+    { icon: <BarChart2 size={22} />, title: "Real-time tracking", description: "Watch your transfer move from initiated to settled. Powered by Sui blockchain technology for tamper-proof records.", color: "var(--sidebar-dark)" },
   ];
   return (
     <section className="py-20" style={{ backgroundColor: "var(--page)" }}>
@@ -322,11 +315,15 @@ const FAQ_ITEMS = [
   { q: "What currencies are supported?", a: "Currently MYR to PHP. We are working on additional corridors — more currency pairs are coming soon." },
 ];
 
-function FAQItem({ item }) {
+function FAQItem({ item }: { item: { q: string; a: string } }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: "1px solid var(--outline)", backgroundColor: "#fff" }}>
-      <button className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50" onClick={() => setOpen(v => !v)} aria-expanded={open}>
+      <button
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left transition-colors hover:bg-slate-50"
+        onClick={() => setOpen(v => !v)}
+        aria-expanded={open}
+      >
         <span className="text-sm font-semibold" style={{ color: "var(--indigo)" }}>{item.q}</span>
         <span className="shrink-0 transition-transform duration-200" style={{ color: "var(--indigo)", transform: open ? "rotate(180deg)" : "rotate(0deg)" }}>
           <ChevronDown size={18} />
@@ -366,7 +363,7 @@ function FAQ() {
 // ─── CTA Banner ───────────────────────────────────────────────────────────────
 function CTABanner() {
   return (
-    <section className="py-20 relative overflow-hidden" style={{ backgroundColor: "var(--sidebar)" }}>
+    <section className="py-20 relative overflow-hidden" style={{ backgroundColor: "var(--sidebar-dark)" }}>
       <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 70% 50%, rgba(67,56,202,0.15) 0%, transparent 60%)" }} />
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
         <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white mb-4">Ready to send your first transfer?</h2>
@@ -382,15 +379,98 @@ function CTABanner() {
   );
 }
 
+// ─── Team ─────────────────────────────────────────────────────────────────────
+const TEAM = [
+  {
+    name: "Aiman Razali",
+    role: "Co-founder & CEO",
+    bio: "Former FX trader at Maybank. 10 years moving money across ASEAN corridors.",
+    avatar: "AR",
+    color: "#4338CA",
+  },
+  {
+    name: "Sofia Tan",
+    role: "Co-founder & CTO",
+    bio: "Ex-Grab engineer. Built payment infrastructure processing RM 2B+ annually.",
+    avatar: "ST",
+    color: "#059669",
+  },
+  {
+    name: "Marcus Lim",
+    role: "Head of Compliance",
+    bio: "10 years at Bank Negara Malaysia. Navigates MSB licensing and BSP regulations.",
+    avatar: "ML",
+    color: "#D97706",
+  },
+  {
+    name: "Priya Nair",
+    role: "Head of Product",
+    bio: "Previously at Wise and Airwallex. Obsessed with making cross-border simple.",
+    avatar: "PN",
+    color: "#0284C7",
+  },
+];
+
+function Team() {
+  return (
+    <section className="py-20" style={{ backgroundColor: "var(--page)" }}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="text-center mb-14">
+          <h2
+            className="text-3xl sm:text-4xl font-semibold tracking-tight mb-3"
+            style={{ color: "var(--indigo)" }}
+          >
+            The team behind Splash
+          </h2>
+          <p className="text-base max-w-xl mx-auto" style={{ color: "var(--ink-3)" }}>
+            Built by people who've spent careers inside banks, fintechs, and regulators — so you don't have to deal with any of it.
+          </p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {TEAM.map((member) => (
+            <div
+              key={member.name}
+              className="bg-white rounded-2xl p-6 flex flex-col items-center text-center gap-4"
+              style={{ border: "1px solid var(--outline)" }}
+            >
+              {/* Avatar */}
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-sm"
+                style={{ backgroundColor: member.color }}
+              >
+                {member.avatar}
+              </div>
+              <div>
+                <div className="text-base font-semibold mb-0.5" style={{ color: "var(--indigo)" }}>
+                  {member.name}
+                </div>
+                <div
+                  className="text-xs font-medium uppercase tracking-wider mb-3"
+                  style={{ color: member.color }}
+                >
+                  {member.role}
+                </div>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--ink-3)" }}>
+                  {member.bio}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ─── Footer ───────────────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="py-12" style={{ backgroundColor: "var(--sidebar)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+    <footer className="py-12" style={{ backgroundColor: "var(--sidebar-dark)", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="flex flex-col gap-3">
             <Link to="/" className="flex items-center gap-2.5">
-              <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg"  />
+              <img src="/splash-logo.svg" alt="Splash" className="h-9 w-9 rounded-lg" />
               <span className="text-lg font-semibold text-white">Splash</span>
             </Link>
             <p className="text-sm max-w-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Fast, affordable MYR to PHP transfers for Malaysian businesses.</p>
@@ -427,6 +507,7 @@ export default function Landing() {
         <Features />
         <FAQ />
         <CTABanner />
+        <Team />
       </main>
       <Footer />
     </div>

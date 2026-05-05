@@ -1,71 +1,94 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
-import api from "./api";
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface User {
   id: string;
   email: string;
   name: string;
   company: string;
-  role?: string;
 }
 
-interface AuthContextValue {
-  user: User | null | false;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (payload: { email: string; password: string; name: string; company?: string }) => Promise<User>;
-  logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (data: { email: string; password: string; name: string; company: string }) => Promise<void>;
+  logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null);
+
+const STORAGE_KEY = 'splash_user';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null | false>(null);
-  const [loading, setLoading] = useState(true);
-
-  const checkSession = useCallback(async () => {
+  const [user, setUser] = useState<User | null>(() => {
     try {
-      const { data } = await api.get<User>("/auth/me");
-      setUser(data);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
     } catch {
-      setUser(false);
-    } finally {
-      setLoading(false);
+      return null;
     }
-  }, []);
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => { checkSession(); }, [checkSession]);
-
-  const login = async (email: string, password: string): Promise<User> => {
-    const { data } = await api.post<User & { token?: string }>("/auth/login", { email, password });
-    if (data.token) localStorage.setItem("splash_token", data.token);
-    setUser(data);
-    return data;
+  const login = async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.detail || 'Invalid email or password');
+      }
+      const userData: User = { id: data.id, email: data.email, name: data.name, company: data.company };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      if (data.token) localStorage.setItem('splash_token', data.token);
+      setUser(userData);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const register = async (payload: { email: string; password: string; name: string; company?: string }): Promise<User> => {
-    const { data } = await api.post<User & { token?: string }>("/auth/register", payload);
-    if (data.token) localStorage.setItem("splash_token", data.token);
-    setUser(data);
-    return data;
+  const register = async (body: { email: string; password: string; name: string; company: string }) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+      const userData: User = { id: data.id, email: data.email, name: data.name, company: data.company };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      if (data.token) localStorage.setItem('splash_token', data.token);
+      setUser(userData);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const logout = async (): Promise<void> => {
-    try { await api.post("/auth/logout"); } catch { /* ignore */ }
-    localStorage.removeItem("splash_token");
-    setUser(false);
+  const logout = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('splash_token');
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refresh: checkSession }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth(): AuthContextValue {
+export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
