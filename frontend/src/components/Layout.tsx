@@ -21,8 +21,8 @@ const NAV_MAIN: NavItem[] = [
 ];
 
 const NAV_DEV: NavItem[] = [
-  { to: "/api",      label: "API & webhooks", icon: Code2 },
-  { to: "/settings", label: "Settings",       icon: Settings },
+  { to: "/transfers", label: "API & webhooks", icon: Code2 },
+  { to: "/dashboard", label: "Settings",       icon: Settings },
 ];
 
 const SUI_PACKAGE_ID = process.env.REACT_APP_SUI_PACKAGE_ID ?? "0xbfd9b35318e8588d45c9f1ce161da10462c61b40377e7f8c890196f5cba4ca51";

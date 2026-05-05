@@ -89,7 +89,7 @@ export default function Dashboard() {
 
       {/* ── Section 01: Today at a glance ── */}
       <SectionLabel num="01" title="Today at a glance" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px", marginBottom: "16px" }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: "10px", marginBottom: "16px" }}>
         <StatCard
           label="VOLUME TODAY"
           value={stats ? formatMYR(stats.total_sent_myr_today || 11250) : "RM 11,250.00"}
@@ -115,7 +115,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Main 2-col grid ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "12px", marginBottom: "16px" }}>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px]" style={{ gap: "12px", marginBottom: "16px" }}>
 
         {/* Volume chart */}
         <div style={{ background: "var(--surface)", border: "1px solid var(--outline)", borderRadius: "10px", padding: "18px" }}>
@@ -282,7 +282,7 @@ export default function Dashboard() {
 
       {/* ── Section 04: Treasury & compliance ── */}
       <SectionLabel num="04" title="Treasury & compliance" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: "10px" }}>
         {[
           { label: "USDC balance",    value: "USDC 0.00",    sub: "on Sui testnet",       color: "var(--usdt)" },
           { label: "Float reserve",   value: "RM 0.00",      sub: "working capital",      color: "var(--myr)" },

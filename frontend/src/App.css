@@ -7,59 +7,39 @@
   overflow-x: hidden;
 }
 
-/* Ensure all containers respect viewport width */
-* {
-  max-width: 100%;
+/* Spinner ring used in loading states */
+.spinner-ring {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(67, 56, 202, 0.2);
+  border-top-color: #4338CA;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
 
-/* Responsive text sizing */
-@media (max-width: 640px) {
-  body {
-    font-size: 13px;
-  }
-  h1 { font-size: 24px !important; }
-  h2 { font-size: 20px !important; }
-  h3 { font-size: 18px !important; }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  body {
-    font-size: 13.5px;
-  }
-  h1 { font-size: 28px !important; }
-  h2 { font-size: 22px !important; }
-  h3 { font-size: 19px !important; }
-}
-
-@media (min-width: 1025px) {
-  body {
-    font-size: 14px;
-  }
-  h1 { font-size: 32px !important; }
-  h2 { font-size: 24px !important; }
-  h3 { font-size: 20px !important; }
-}
-
-/* Ensure images are responsive */
-img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Ensure tables are responsive */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-/* Ensure forms are responsive */
-input, textarea, select, button {
-  max-width: 100%;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Prevent horizontal scroll */
 body, html {
   overflow-x: hidden;
   width: 100%;
+}
+
+/* Ensure images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure tables collapse borders */
+table {
+  border-collapse: collapse;
+}
+
+/* Prevent inputs from overflowing */
+input, textarea, select {
+  max-width: 100%;
 }

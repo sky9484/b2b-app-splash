@@ -384,20 +384,26 @@ async def list_transfers(
 @api.get("/transfers/stats")
 async def transfer_stats(user=Depends(get_current_user)):
     now = datetime.now(timezone.utc)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    today_start  = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    month_start  = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    days30_start = (now - timedelta(days=30)).isoformat()
     rows = await db.transfers.find({"user_id": user["id"]}, {"_id": 0}).to_list(2000)
-    total_month = sum(r["send_amount_myr"] for r in rows if r["status"] == "completed" and r["created_at"] >= month_start)
-    pending = sum(1 for r in rows if r["status"] == "pending")
-    completed = [r for r in rows if r["status"] == "completed"]
-    avg_seconds = 222  # default 3m 42s
+    completed    = [r for r in rows if r["status"] == "completed"]
+    total_today  = sum(r["send_amount_myr"] for r in completed if r["created_at"] >= today_start)
+    total_month  = sum(r["send_amount_myr"] for r in completed if r["created_at"] >= month_start)
+    completed_30d = [r for r in completed if r["created_at"] >= days30_start]
+    pending      = sum(1 for r in rows if r["status"] == "pending")
+    avg_seconds  = 222  # default 3m 42s
     if completed:
         avg_seconds = int(sum(r.get("settlement_seconds", 222) for r in completed) / len(completed))
     recipients = await db.recipients.count_documents({"user_id": user["id"]})
     return {
-        "total_sent_myr_month": round(total_month, 2),
-        "active_recipients": recipients,
-        "pending_transfers": pending,
-        "avg_settlement_seconds": avg_seconds,
+        "total_sent_myr_today":    round(total_today, 2),
+        "total_sent_myr_month":    round(total_month, 2),
+        "completed_transfers_30d": len(completed_30d),
+        "active_recipients":       recipients,
+        "pending_transfers":       pending,
+        "avg_settlement_seconds":  avg_seconds,
     }
 
 @api.post("/transfers")
@@ -832,7 +838,9 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:3001",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
         os.environ.get("FRONTEND_URL", "http://localhost:3000"),
     ],
     allow_credentials=True,

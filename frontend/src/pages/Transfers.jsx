@@ -43,7 +43,7 @@ export default function Transfers() {
     const totalFees   = completed.reduce((s, r) => s + (r.total_fee_myr  || 0), 0);
     const effectiveRate = totalSent > 0 ? ((totalFees / totalSent) * 100).toFixed(2) : "0.00";
     const avgSec      = completed.length > 0
-      ? Math.round(completed.reduce((s, r) => s + (r.settlement_time_seconds || 221), 0) / completed.length)
+      ? Math.round(completed.reduce((s, r) => s + (r.settlement_seconds || 221), 0) / completed.length)
       : 221;
     const mins = Math.floor(avgSec / 60);
     const secs = avgSec % 60;
@@ -187,7 +187,7 @@ export default function Transfers() {
                       <div className="flex items-center gap-2.5">
                         <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
                           style={{ backgroundColor: "#6366F1" }}>
-                          {(r.recipient_name || "?").split(" ").map((n: string) => n[0]).slice(0,2).join("")}
+                          {(r.recipient_name || "?").split(" ").map((n, i) => n[0]).slice(0,2).join("")}
                         </div>
                         <div>
                           <div className="font-medium" style={{ color: "var(--ink)" }}>{r.recipient_name}</div>
@@ -287,12 +287,12 @@ export default function Transfers() {
   );
 }
 
-function Th({ children, className = "" }: any) {
+function Th({ children, className = "" }) {
   return (
     <th className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wider ${className}`}
       style={{ color: "var(--ink-3)" }}>{children}</th>
   );
 }
-function Td({ children, className = "", style }: any) {
+function Td({ children, className = "", style }) {
   return <td className={`px-4 py-3 ${className}`} style={style}>{children}</td>;
 }
