@@ -442,10 +442,40 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
             "transfer_id": tid,
         })
 
-    # ── Build transfer doc ─────────────────────────────────────────────────
-    sui_hash = gen_sui_tx_hash()
-    # Explorer URL uses the tx digest — not the package ID
-    sui_explorer = sui_service.explorer_url(sui_hash)
+    # ── Settle on Sui ──────────────────────────────────────────────────────
+    # Try the real on-chain record_settlement when configured + funded.
+    # Falls back to a mock digest so the demo flow keeps working when not.
+    ref_id = body.reference or gen_reference()
+    sui_attempted = sui_service.is_configured()
+    sui_real = False
+    sui_hash: "str | None" = None
+
+    if sui_attempted:
+        try:
+            digest = await sui_service.record_settlement_async(
+                ref_id=ref_id,
+                myr_minor=int(round(q["send_amount_myr"] * 100)),
+                php_minor=int(round(q["receive_amount_php"] * 100)),
+                rate_bp=int(round(q["rate"] * 10000)),
+                recipient_hash_bytes=sui_service.recipient_hash(
+                    rec["name"], rec["bank"], rec["account_number"]
+                ),
+            )
+            if digest:
+                sui_hash = digest
+                sui_real = True
+                logger.info(f"[SUI] real settlement digest={digest} ref={ref_id}")
+        except Exception as e:
+            logger.warning(f"sui record_settlement raised on transfer create: {e}")
+
+    if not sui_hash:
+        sui_hash = gen_sui_tx_hash()  # mock fallback
+
+    sui_stage_done = sui_real or not sui_attempted
+    sui_stage_desc = (
+        f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]} (testnet)" if sui_real
+        else f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]}"
+    )
 
     doc = {
         "id": tid, "user_id": user["id"], "recipient_id": rec["id"],
@@ -455,15 +485,15 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
         "send_amount_myr": q["send_amount_myr"], "receive_amount_php": q["receive_amount_php"],
         "rate": q["rate"], "total_fee_myr": q["total_fee"],
         "fx_spread": q["fx_spread"], "platform_fee": q["platform_fee"], "fixed_fee": q["fixed_fee"],
-        "reference": body.reference or gen_reference(),
+        "reference": ref_id,
         "note": body.note or "",
         "status": "pending",
         "settlement_seconds": random.randint(180, 300),
         "created_at": now.isoformat(),
         "sui_tx_hash": sui_hash,
-        "sui_explorer_url": sui_explorer,
+        "sui_explorer_url": sui_service.explorer_url(sui_hash),
         "sui_vision_url": sui_service.vision_url(sui_hash),
-        "sui_real": False,
+        "sui_real": sui_real,
         "curlec_order_id": None,
         "curlec_payment_id": None,
         "usdc_amount": hata_result["usdc_amount"],
@@ -471,11 +501,11 @@ async def create_transfer(body: TransferIn, user=Depends(get_current_user)):
         "hata_order_id": hata_result["hata_order_id"],
         "hata_tier": hata_result["tier"],
         "stages": [
-            {"key": "fpx",  "label": "FPX payment received",          "desc": "Your bank transfer completed successfully",                                                    "done": True,  "ts": now.isoformat()},
-            {"key": "hata", "label": "MYR converted to USDC via Hata", "desc": f"{q['send_amount_myr']:.2f} MYR → {hata_result['usdc_amount']} USDC ({hata_result['tier']})", "done": True,  "ts": (now + timedelta(seconds=20)).isoformat()},
-            {"key": "sui",  "label": "USDC settled on Sui blockchain",  "desc": f"Settlement hash: {sui_hash[:10]}…{sui_hash[-6:]}",                                           "done": True,  "ts": (now + timedelta(seconds=40)).isoformat()},
-            {"key": "coins","label": "USDT converted to PHP on Coins.ph","desc": f"Processing → {q['receive_amount_php']:.2f} PHP",                                            "done": False, "ts": None},
-            {"key": "bank", "label": f"Sent to recipient's {rec['bank']} account", "desc": "Awaiting bank confirmation",                                                       "done": False, "ts": None},
+            {"key": "fpx",  "label": "FPX payment received",          "desc": "Your bank transfer completed successfully",                                                    "done": True,           "ts": now.isoformat()},
+            {"key": "hata", "label": "MYR converted to USDC via Hata", "desc": f"{q['send_amount_myr']:.2f} MYR → {hata_result['usdc_amount']} USDC ({hata_result['tier']})", "done": True,           "ts": (now + timedelta(seconds=20)).isoformat()},
+            {"key": "sui",  "label": "USDC settled on Sui blockchain",  "desc": sui_stage_desc,                                                                                "done": sui_stage_done, "ts": (now + timedelta(seconds=40)).isoformat() if sui_stage_done else None},
+            {"key": "coins","label": "USDT converted to PHP on Coins.ph","desc": f"Processing → {q['receive_amount_php']:.2f} PHP",                                            "done": False,          "ts": None},
+            {"key": "bank", "label": f"Sent to recipient's {rec['bank']} account", "desc": "Awaiting bank confirmation",                                                       "done": False,          "ts": None},
         ],
     }
     await db.transfers.insert_one(doc)
